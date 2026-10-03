@@ -1,6 +1,6 @@
 # BotBait — product descriptions optimised for AI shopping agents
 
-***[Demo website](https://eat-hack-demo.onrender.com/) — write your own product description and see how it ranks against our model and Claude Opus.***
+***[Custom model](https://huggingface.co/lollygag/qwen3-4b-juice-descriptions) · [Demo website](https://eat-hack-demo.onrender.com/) — write your own product description and see how it ranks against our model and Claude Opus.***
 
 **EAT_HACK 2026 · Track 1: Human Truth**
 
@@ -58,13 +58,15 @@ Attribution is the hard part: real shortlists confound copy with price, brand, a
 
 Winning arms become supervised targets (best arm per product × intent; second-best only if it also beats `original`). DPO pairs: best-vs-worst and second-vs-fifth, gated on a minimum score gap. Base model: `Qwen/Qwen3-4B-Instruct-2507` with LoRA.
 
+The merged fine-tune is on Hugging Face: **[lollygag/qwen3-4b-juice-descriptions](https://huggingface.co/lollygag/qwen3-4b-juice-descriptions)**.
+
 Fine-tuning is compared against a **prompt-only baseline** (a strong model told the winning style in plain English) on held-out products via `evaluate.py`. If prompting matches the fine-tune, the fine-tune added nothing.
 
 ### Demo
 
-[Live demo](https://eat-hack-demo.onrender.com/) — write a description for a real product and shopper request; compare average rank against our model and Claude Opus across five ranking rounds with shared display orders.
+[Live demo](https://eat-hack-demo.onrender.com/) — write a description for a real product and shopper request; compare average rank against BotBait and Claude Opus across five ranking rounds with shared display orders.
 
-Writer backend is swappable via `DEMO_BACKEND` (`mlx` / `trl` + `DEMO_ADAPTER`, or `openrouter`).
+Writer backend is swappable via `DEMO_BACKEND` (`mlx` / `trl` + `DEMO_ADAPTER`, or `openrouter`). Set `DEMO_ADAPTER=lollygag/qwen3-4b-juice-descriptions` to load the custom model.
 
 ---
 

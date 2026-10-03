@@ -71,7 +71,7 @@
       <div class="board">
         <div class="panel graph-span">
           <p class="label">The test</p>
-          <p class="brief">AI shopping agents ranked products from a list of eight. Your description, our fine-tuned model, base Qwen 4B, and Claude Opus were each ranked five times against the same seven others. 1st is best.</p>
+          <p class="brief">AI shopping agents ranked products from a list of eight. Your description, our fine-tuned model, base Qwen 8B, and Claude Opus were each ranked five times against the same seven others. 1st is best.</p>
         </div>
         <article id="you" class="panel col" data-source="user">
           <p class="who">You</p>
@@ -88,7 +88,7 @@
           <p class="record"></p>
         </article>
         <article id="qwen" class="panel col" data-source="qwen">
-          <p class="who">Qwen 4B</p>
+          <p class="who">Qwen 8B</p>
           <h1 class="outcome"></h1>
           <p class="mean"></p>
           <p class="mean-label">average rank</p>
@@ -117,7 +117,7 @@
               <div class="x-labels">
                 <span class="series-you">you</span>
                 <span class="series-model">botbait</span>
-                <span class="series-qwen">qwen 4b</span>
+                <span class="series-qwen">qwen 8b</span>
                 <span class="series-opus">claude opus</span>
               </div>
             </div>
@@ -133,7 +133,7 @@
           <p id="model-copy" class="copy"></p>
         </article>
         <article class="panel copy-col">
-          <p class="label">Qwen 4B's description</p>
+          <p class="label">Qwen 8B's description</p>
           <p id="qwen-copy" class="copy"></p>
         </article>
         <article class="panel copy-col">
@@ -245,7 +245,7 @@
     const sides = [
       { id: "you", key: "user", series: ".series-you", copy: "you-copy", win: "You did better.", label: "You" },
       { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "BotBait did better.", label: "BotBait" },
-      { id: "qwen", key: "qwen", series: ".series-qwen", copy: "qwen-copy", win: "Qwen 4B did better.", label: "Qwen 4B" },
+      { id: "qwen", key: "qwen", series: ".series-qwen", copy: "qwen-copy", win: "Qwen 8B did better.", label: "Qwen 8B" },
       { id: "opus", key: "opus", series: ".series-opus", copy: "opus-copy", win: "Claude Opus did better.", label: "Claude Opus" },
     ]
 
@@ -359,7 +359,7 @@
           ? "Agents finished ranking the list of eight"
           : "Agent " + Math.min(done + 1, total) + " is ranking the list of eight"
       } else if (phase === "writing") {
-        agentCaption.textContent = "BotBait, Qwen 4B, and Claude Opus are writing competing descriptions"
+        agentCaption.textContent = "BotBait, Qwen 8B, and Claude Opus are writing competing descriptions"
       } else {
         agentCaption.textContent = ""
       }

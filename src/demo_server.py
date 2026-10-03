@@ -173,14 +173,17 @@ async def rank(body: RankBody) -> StreamingResponse:
                 )
                 if not finished:
                     yield _sse({"phase": "writing"})
-            try:
-                model_text = writers[0].result()
-                qwen_text = writers[1].result()
-                opus_text = writers[2].result()
-            except Exception:
-                log.exception("description failed")
-                yield _sse({"phase": "error", "message": "Could not write a description."})
-                return
+            texts_by_writer: dict[str, str] = {}
+            for name, task in zip(("model", "qwen", "opus"), writers):
+                try:
+                    texts_by_writer[name] = task.result()
+                except Exception:
+                    log.exception("description failed for %s", name)
+                    yield _sse({"phase": "error", "message": "Could not write a description."})
+                    return
+            model_text = texts_by_writer["model"]
+            qwen_text = texts_by_writer["qwen"]
+            opus_text = texts_by_writer["opus"]
 
             asins = catalog.panel_asins(body.parent_asin)
             orders = shared_orders(asins, N_REPS, random.Random())

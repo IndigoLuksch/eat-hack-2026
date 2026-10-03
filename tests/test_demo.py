@@ -94,6 +94,19 @@ class OpenRouterWriter(unittest.TestCase):
         self.assertEqual(client.completions.kwargs["max_tokens"], 320)
         self.assertEqual(client.completions.kwargs["temperature"], 0.7)
 
+    def test_passes_extra_body_for_qwen_thinking_off(self) -> None:
+        client = _FakeClient("Crisp apple juice.")
+        writer = _OpenRouterGenerator(
+            "qwen/qwen3-8b",
+            client=client,
+            extra_body={"reasoning": {"effort": "none", "exclude": True}},
+        )
+        writer.generate([{"role": "user", "content": "Title: Juice"}])
+        self.assertEqual(
+            client.completions.kwargs["extra_body"],
+            {"reasoning": {"effort": "none", "exclude": True}},
+        )
+
 
 class ImageAndFeatures(unittest.TestCase):
     def test_prefers_main_hi_res_then_large(self) -> None:
