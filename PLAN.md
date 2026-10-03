@@ -162,8 +162,8 @@ is large and is not otherwise controlled.
 
 **Prompt.** System prompt casts the model as a shopping assistant returning a
 full ranking. User prompt contains the intent `shopper` line and 8 option
-cards, each with `option_id`, title, brand, price, and the assigned variant
-text. Require JSON:
+cards, each with `option_id` and the assigned variant text. Title, brand,
+price, rating, and review count stay off the card. Require JSON:
 
 ```json
 {"ranking": ["O3", "O7", "O1", "O5", "O2", "O8", "O4", "O6"]}

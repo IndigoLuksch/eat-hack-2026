@@ -35,7 +35,7 @@ RANK_ATTEMPTS = 3
 
 RANK_SYSTEM = (
     "You are a shopping assistant. Rank every option from best to worst for the "
-    "shopper. Weigh the description together with the title, brand, and price. "
+    "shopper. Judge each option only by its description. "
     "Return every option id exactly once, best first. "
     "Return JSON only. The object has one key, ranking, whose value lists every "
     "option id from best to worst."
@@ -111,9 +111,6 @@ def rank_user(shopper: str, cards: list[dict[str, Any]]) -> str:
     for card in cards:
         blocks.append(
             f"Option {card['option_id']}\n"
-            f"Title: {card['title']}\n"
-            f"Brand: {card['brand']}\n"
-            f"Price: ${card['price']:.2f}\n"
             f"Description: {card['text']}\n"
         )
     ids = ", ".join(card["option_id"] for card in cards)
