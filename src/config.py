@@ -24,6 +24,9 @@ VARIANT_REASONING_EFFORT = os.getenv("VARIANT_REASONING_EFFORT", "")
 RANK_MODEL = os.getenv("RANK_MODEL", "openai/gpt-4.1-mini")
 # Strong hosted baseline shown beside the fine-tune in the demo.
 BASELINE_MODEL = os.getenv("BASELINE_MODEL", "anthropic/claude-opus-4.6")
+# Untuned base of the fine-tune, hosted. Closest OpenRouter slug to
+# Qwen/Qwen3-4B-Instruct-2507; thinking is turned off at request time.
+BASE_QWEN_MODEL = os.getenv("BASE_QWEN_MODEL", "qwen/qwen3-4b")
 CONCURRENCY = int(os.getenv("CONCURRENCY", "16"))
 # Verified on Hugging Face: https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507
 BASE_MODEL = "Qwen/Qwen3-4B-Instruct-2507"

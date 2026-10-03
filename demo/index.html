@@ -51,14 +51,14 @@
             <div class="agent" data-n="5"><span class="agent-face"></span><span class="agent-tag">A5</span></div>
           </div>
           <div class="rank-list">
-            <div class="rank-item" style="--i:0"><span class="rank-num">1</span><span class="rank-bar"></span></div>
-            <div class="rank-item" style="--i:1"><span class="rank-num">2</span><span class="rank-bar"></span></div>
-            <div class="rank-item" style="--i:2"><span class="rank-num">3</span><span class="rank-bar"></span></div>
-            <div class="rank-item" style="--i:3"><span class="rank-num">4</span><span class="rank-bar"></span></div>
-            <div class="rank-item" style="--i:4"><span class="rank-num">5</span><span class="rank-bar"></span></div>
-            <div class="rank-item" style="--i:5"><span class="rank-num">6</span><span class="rank-bar"></span></div>
-            <div class="rank-item" style="--i:6"><span class="rank-num">7</span><span class="rank-bar"></span></div>
-            <div class="rank-item" style="--i:7"><span class="rank-num">8</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:1.7s;--delay:0.4s;--lo:0.48;--hi:0.96"><span class="rank-num">1</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:2.9s;--delay:1.1s;--lo:0.62;--hi:1"><span class="rank-num">2</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:2.1s;--delay:0.05s;--lo:0.35;--hi:0.88"><span class="rank-num">3</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:3.4s;--delay:1.8s;--lo:0.55;--hi:0.92"><span class="rank-num">4</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:1.4s;--delay:0.7s;--lo:0.4;--hi:1"><span class="rank-num">5</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:2.6s;--delay:0.2s;--lo:0.7;--hi:0.94"><span class="rank-num">6</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:1.9s;--delay:1.5s;--lo:0.3;--hi:0.85"><span class="rank-num">7</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--dur:3.1s;--delay:0.9s;--lo:0.58;--hi:1"><span class="rank-num">8</span><span class="rank-bar"></span></div>
           </div>
           <p class="agent-caption"><span id="agent-caption">Model is writing a competing description</span></p>
         </div>
@@ -70,7 +70,7 @@
       <div class="board">
         <div class="panel graph-span">
           <p class="label">The test</p>
-          <p class="brief">AI shopping agents ranked products from a list of eight. Your description, our model, and Claude Opus were each ranked five times against the same seven others. 1st is best.</p>
+          <p class="brief">AI shopping agents ranked products from a list of eight. Your description, our fine-tuned model, base Qwen 4B, and Claude Opus were each ranked five times against the same seven others. 1st is best.</p>
         </div>
         <article id="you" class="panel col" data-source="user">
           <p class="who">You</p>
@@ -81,6 +81,13 @@
         </article>
         <article id="model" class="panel col" data-source="model">
           <p class="who">Our model</p>
+          <h1 class="outcome"></h1>
+          <p class="mean"></p>
+          <p class="mean-label">average rank</p>
+          <p class="record"></p>
+        </article>
+        <article id="qwen" class="panel col" data-source="qwen">
+          <p class="who">Qwen 4B</p>
           <h1 class="outcome"></h1>
           <p class="mean"></p>
           <p class="mean-label">average rank</p>
@@ -102,12 +109,14 @@
                 <div class="lanes">
                   <div class="lane series-you"></div>
                   <div class="lane series-model"></div>
+                  <div class="lane series-qwen"></div>
                   <div class="lane series-opus"></div>
                 </div>
               </div>
               <div class="x-labels">
                 <span class="series-you">you</span>
                 <span class="series-model">our model</span>
+                <span class="series-qwen">qwen 4b</span>
                 <span class="series-opus">claude opus</span>
               </div>
             </div>
@@ -121,6 +130,10 @@
         <article class="panel copy-col">
           <p class="label">Our model's description</p>
           <p id="model-copy" class="copy"></p>
+        </article>
+        <article class="panel copy-col">
+          <p class="label">Qwen 4B's description</p>
+          <p id="qwen-copy" class="copy"></p>
         </article>
         <article class="panel copy-col">
           <p class="label">Claude Opus's description</p>
@@ -229,9 +242,10 @@
     }
 
     const sides = [
-      { id: "you", key: "user", series: ".series-you", copy: "you-copy", win: "You did better." },
-      { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "Our model did better." },
-      { id: "opus", key: "opus", series: ".series-opus", copy: "opus-copy", win: "Claude Opus did better." },
+      { id: "you", key: "user", series: ".series-you", copy: "you-copy", win: "You did better.", label: "You" },
+      { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "Our model did better.", label: "Our model" },
+      { id: "qwen", key: "qwen", series: ".series-qwen", copy: "qwen-copy", win: "Qwen 4B did better.", label: "Qwen 4B" },
+      { id: "opus", key: "opus", series: ".series-opus", copy: "opus-copy", win: "Claude Opus did better.", label: "Claude Opus" },
     ]
 
     function comparisonGraph(payload) {
@@ -252,22 +266,22 @@
       const parts = []
       for (const side of sides) {
         paintLane(graph.querySelector(side.series), payload[side.key])
-        parts.push(side.id === "you" ? "You" : side.id === "model" ? "Our model" : "Claude Opus")
-        parts[parts.length - 1] += " averaged rank " + formatMean(payload[side.key].mean)
+        parts.push(side.label + " averaged rank " + formatMean(payload[side.key].mean))
       }
       graph.setAttribute("aria-label", parts.join(". ") + ". 1 is best.")
     }
 
     function bestCounts(payload) {
       const total = payload.user.places.length
-      const wins = { user: 0, model: 0, opus: 0 }
+      const wins = { user: 0, model: 0, qwen: 0, opus: 0 }
       for (let i = 0; i < total; i++) {
         const ranks = {
           user: payload.user.places[i],
           model: payload.model.places[i],
+          qwen: payload.qwen.places[i],
           opus: payload.opus.places[i],
         }
-        const best = Math.min(ranks.user, ranks.model, ranks.opus)
+        const best = Math.min(ranks.user, ranks.model, ranks.qwen, ranks.opus)
         for (const key of Object.keys(wins)) {
           if (ranks[key] === best) wins[key] += 1
         }
@@ -344,7 +358,7 @@
           ? "Agents finished ranking the list of eight"
           : "Agent " + Math.min(done + 1, total) + " is ranking the list of eight"
       } else if (phase === "writing") {
-        agentCaption.textContent = "Our model and Claude Opus are writing competing descriptions"
+        agentCaption.textContent = "Our model, Qwen 4B, and Claude Opus are writing competing descriptions"
       } else {
         agentCaption.textContent = ""
       }

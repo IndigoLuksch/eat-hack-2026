@@ -1,4 +1,4 @@
-"""Compare a visitor's description with the model and a strong baseline.
+"""Compare a visitor's description with the model and hosted baselines.
 
 Five repetitions. Within a repetition every ranking shares a display order and
 the same seven competitor descriptions. Only the target product's text changes.
@@ -10,7 +10,7 @@ import random
 from typing import Any
 
 N_REPS = 5
-SOURCES = ("user", "model", "opus")
+SOURCES = ("user", "model", "qwen", "opus")
 
 
 def shared_orders(asins: list[str], reps: int, rng: random.Random) -> list[list[str]]:
@@ -63,25 +63,18 @@ def place(ranking: list[str], option_id: str) -> int:
     return ranking.index(option_id) + 1
 
 
-def summarise_places(
-    user_places: list[int],
-    model_places: list[int],
-    opus_places: list[int],
-) -> dict[str, Any]:
+def summarise_places(places_by_source: dict[str, list[int]]) -> dict[str, Any]:
     """Lower average place wins. Equal best averages are a tie."""
-    sides = {
-        "user": user_places,
-        "model": model_places,
-        "opus": opus_places,
-    }
-    lengths = {len(places) for places in sides.values()}
+    if set(places_by_source) != set(SOURCES):
+        raise ValueError(f"expected sources {SOURCES}, got {tuple(places_by_source)}")
+    lengths = {len(places) for places in places_by_source.values()}
     if len(lengths) != 1 or 0 in lengths:
         raise ValueError("every side needs the same non-empty list of places")
-    means = {key: sum(places) / len(places) for key, places in sides.items()}
+    means = {key: sum(places) / len(places) for key, places in places_by_source.items()}
     best = min(means.values())
     leaders = [key for key, mean in means.items() if mean == best]
     winner = leaders[0] if len(leaders) == 1 else "tie"
     return {
-        key: {"places": list(places), "mean": means[key]}
-        for key, places in sides.items()
+        key: {"places": list(places_by_source[key]), "mean": means[key]}
+        for key in SOURCES
     } | {"winner": winner}

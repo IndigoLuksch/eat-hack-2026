@@ -114,11 +114,20 @@ class _MlxGenerator:
         return str(text).strip()
 
 
+_THINK_BLOCK = re.compile(r"<think>.*?</think>", flags=re.S)
+
+
 class _OpenRouterGenerator:
     """Same training prompt as the fine-tune, answered by a hosted model."""
 
-    def __init__(self, model: str, client: Any = None) -> None:
+    def __init__(
+        self,
+        model: str,
+        client: Any = None,
+        extra_body: Optional[dict[str, Any]] = None,
+    ) -> None:
         self.model = model
+        self.extra_body = dict(extra_body or {})
         if client is not None:
             self.client = client
             return
@@ -146,14 +155,17 @@ class _OpenRouterGenerator:
         last: Exception | None = None
         for attempt in range(3):
             try:
-                resp = self.client.chat.completions.create(
-                    model=self.model,
-                    temperature=temperature,
-                    max_tokens=max(max_new_tokens, 320),
-                    messages=prompt,
-                )
+                kwargs: dict[str, Any] = {
+                    "model": self.model,
+                    "temperature": temperature,
+                    "max_tokens": max(max_new_tokens, 320),
+                    "messages": prompt,
+                }
+                if self.extra_body:
+                    kwargs["extra_body"] = self.extra_body
+                resp = self.client.chat.completions.create(**kwargs)
                 content = resp.choices[0].message.content or ""
-                text = content.strip()
+                text = _THINK_BLOCK.sub("", content).strip()
                 if text:
                     return text
                 raise RuntimeError("empty completion")

@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from src.build_finetune_data import prompt_messages
-from src.config import BASELINE_MODEL, INTENTS, RANK_MODEL, ROOT
+from src.config import BASE_QWEN_MODEL, BASELINE_MODEL, INTENTS, RANK_MODEL, ROOT
 from src.demo_catalog import Catalog, load_catalog
 from src.demo_model import ResidentModel, _OpenRouterGenerator
 from src.demo_rank import (
@@ -43,18 +43,22 @@ MAX_WORDS = 400
 RANK_ATTEMPTS = 3
 # Some proxies buffer the first kilobytes of a stream. A comment flushes them.
 _PADDING = ":" + (" " * 2048) + "\n\n"
+# Qwen3-4B can think by default; keep it in the non-thinking Instruct mode.
+_QWEN_EXTRA = {"reasoning": {"effort": "none", "exclude": True}}
 
 catalog: Catalog
 model: ResidentModel
+qwen: _OpenRouterGenerator
 baseline: _OpenRouterGenerator
 
 
 def _start_model() -> None:
-    global catalog, model, baseline
+    global catalog, model, qwen, baseline
     catalog = load_catalog()
     model = ResidentModel()
     # Same OpenRouter key the ranker needs; construct here so a missing key
     # fails before the first visitor submits.
+    qwen = _OpenRouterGenerator(BASE_QWEN_MODEL, extra_body=_QWEN_EXTRA)
     baseline = _OpenRouterGenerator(BASELINE_MODEL)
     threading.Thread(target=model.load, name="demo-model", daemon=True).start()
 
@@ -157,6 +161,7 @@ async def rank(body: RankBody) -> StreamingResponse:
             messages = prompt_messages(catalog.products[body.parent_asin], body.intent)
             writers = [
                 asyncio.create_task(asyncio.to_thread(model.generate, messages)),
+                asyncio.create_task(asyncio.to_thread(qwen.generate, messages)),
                 asyncio.create_task(asyncio.to_thread(baseline.generate, messages)),
             ]
             pending_writers = set(writers)
@@ -170,7 +175,8 @@ async def rank(body: RankBody) -> StreamingResponse:
                     yield _sse({"phase": "writing"})
             try:
                 model_text = writers[0].result()
-                opus_text = writers[1].result()
+                qwen_text = writers[1].result()
+                opus_text = writers[2].result()
             except Exception:
                 log.exception("description failed")
                 yield _sse({"phase": "error", "message": "Could not write a description."})
@@ -189,7 +195,12 @@ async def rank(body: RankBody) -> StreamingResponse:
             places: dict[str, list[Optional[int]]] = {
                 source: [None] * N_REPS for source in SOURCES
             }
-            texts = {"user": text, "model": model_text, "opus": opus_text}
+            texts = {
+                "user": text,
+                "model": model_text,
+                "qwen": qwen_text,
+                "opus": opus_text,
+            }
 
             def runs_done() -> int:
                 return sum(
@@ -226,9 +237,7 @@ async def rank(body: RankBody) -> StreamingResponse:
                 yield _sse({"phase": "ranking", "done": runs_done(), "total": N_REPS})
 
             summary = summarise_places(
-                [int(slot) for slot in places["user"]],
-                [int(slot) for slot in places["model"]],
-                [int(slot) for slot in places["opus"]],
+                {source: [int(slot) for slot in places[source]] for source in SOURCES}
             )
             for source in SOURCES:
                 summary[source]["text"] = texts[source]

@@ -176,15 +176,32 @@ class PairedRanking(unittest.TestCase):
 
     def test_lower_mean_wins_and_equals_tie(self) -> None:
         self.assertEqual(
-            summarise_places([1, 2, 3], [4, 4, 4], [5, 5, 5])["winner"], "user"
+            summarise_places(
+                {"user": [1, 2, 3], "model": [4, 4, 4], "qwen": [5, 5, 5], "opus": [6, 6, 6]}
+            )["winner"],
+            "user",
         )
         self.assertEqual(
-            summarise_places([2, 2, 2], [1, 2, 2], [3, 3, 3])["winner"], "model"
+            summarise_places(
+                {"user": [2, 2, 2], "model": [1, 2, 2], "qwen": [3, 3, 3], "opus": [4, 4, 4]}
+            )["winner"],
+            "model",
         )
         self.assertEqual(
-            summarise_places([3, 3, 3], [2, 2, 2], [1, 1, 1])["winner"], "opus"
+            summarise_places(
+                {"user": [4, 4, 4], "model": [3, 3, 3], "qwen": [1, 1, 1], "opus": [2, 2, 2]}
+            )["winner"],
+            "qwen",
         )
-        tied = summarise_places([1, 4], [2, 3], [4, 1])
+        self.assertEqual(
+            summarise_places(
+                {"user": [3, 3, 3], "model": [2, 2, 2], "qwen": [4, 4, 4], "opus": [1, 1, 1]}
+            )["winner"],
+            "opus",
+        )
+        tied = summarise_places(
+            {"user": [1, 4], "model": [2, 3], "qwen": [5, 5], "opus": [4, 1]}
+        )
         self.assertEqual(tied["winner"], "tie")
         self.assertEqual(tied["user"]["mean"], 2.5)
         self.assertEqual(tied["opus"]["mean"], 2.5)
@@ -211,18 +228,24 @@ class RankStream(unittest.TestCase):
             def generate(self, messages: list, max_new_tokens: int = 180, temperature: float = 0.7) -> str:
                 return "Opus copy about this juice."
 
+        class FakeQwen:
+            def generate(self, messages: list, max_new_tokens: int = 180, temperature: float = 0.7) -> str:
+                return "Qwen copy about this juice."
+
         async def fake_rank(caller: object, intent_key: str, cards: list) -> list:
-            # Each call has only one of the three contestants on the target slot.
+            # Each call has only one of the four contestants on the target slot.
             target = next(
                 card
                 for card in cards
-                if str(card["text"]).startswith(("USER", "Model", "Opus"))
+                if str(card["text"]).startswith(("USER", "Model", "Qwen", "Opus"))
             )
             text = str(target["text"])
             if text.startswith("USER"):
                 slot = 1
             elif text.startswith("Opus"):
                 slot = 2
+            elif text.startswith("Qwen"):
+                slot = 3
             else:
                 slot = 8
             others = [card["option_id"] for card in cards if card is not target]
@@ -233,6 +256,7 @@ class RankStream(unittest.TestCase):
         server._start_model = lambda: (
             setattr(server, "catalog", server.load_catalog()),
             setattr(server, "model", FakeModel()),
+            setattr(server, "qwen", FakeQwen()),
             setattr(server, "baseline", FakeBaseline()),
         )
         server.rank_cards = fake_rank
@@ -259,6 +283,8 @@ class RankStream(unittest.TestCase):
             self.assertEqual(done["result"]["user"]["places"], [1, 1, 1, 1, 1])
             self.assertEqual(done["result"]["model"]["text"], "Model copy about this juice.")
             self.assertEqual(done["result"]["model"]["places"], [8, 8, 8, 8, 8])
+            self.assertEqual(done["result"]["qwen"]["text"], "Qwen copy about this juice.")
+            self.assertEqual(done["result"]["qwen"]["places"], [3, 3, 3, 3, 3])
             self.assertEqual(done["result"]["opus"]["text"], "Opus copy about this juice.")
             self.assertEqual(done["result"]["opus"]["places"], [2, 2, 2, 2, 2])
             self.assertIn('"total": 5', body)
