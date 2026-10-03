@@ -17,10 +17,9 @@ REVIEWS_JSONL = "raw/review_categories/Grocery_and_Gourmet_Food.jsonl"
 # --- OpenRouter -------------------------------------------------------------
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-# Free on OpenRouter. It reasons by default at max effort, which spends the
-# completion budget before the description, so generation requests low effort.
-VARIANT_MODEL = os.getenv("VARIANT_MODEL", "stealth/space-bunny-alpha")
-VARIANT_REASONING_EFFORT = os.getenv("VARIANT_REASONING_EFFORT", "low")
+# Fast, cheap, and no reasoning step. About $0.40 for the 3,000 descriptions.
+VARIANT_MODEL = os.getenv("VARIANT_MODEL", "google/gemini-2.5-flash-lite")
+VARIANT_REASONING_EFFORT = os.getenv("VARIANT_REASONING_EFFORT", "")
 # A step up from gpt-4o-mini, still a fast mini model with no reasoning tax.
 RANK_MODEL = os.getenv("RANK_MODEL", "openai/gpt-4.1-mini")
 CONCURRENCY = int(os.getenv("CONCURRENCY", "16"))
@@ -78,7 +77,7 @@ ARMS: dict[str, str] = {
     "quantified": "Foreground numbers: volume, servings, percentages, counts.",
     "use_case": "Concrete situations and moments where this drink fits.",
     "assurance": (
-        "Trust signals present in the source: brand provenance, rating, certifications."
+        "Trust signals present in the source: brand provenance and certifications."
     ),
     "probe": (
         "Write a deliberately vague, low-information description. Generic praise "

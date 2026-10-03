@@ -55,7 +55,7 @@ To build: `src/run_ranking.py`, `src/score_variants.py`,
 | SFT examples                                 | 1,200 (top-2 arms per cell)                                     |
 | DPO pairs                                    | ≤1,200 (up to 2 per cell, gated on score gap)                   |
 | Shrinkage prior                              | 25 pseudo-observations                                          |
-| Generation model                             | `stealth/space-bunny-alpha` via OpenRouter (free; reasoning effort low) |
+| Generation model                             | `google/gemini-2.5-flash-lite` via OpenRouter                    |
 | Ranking model                                | `openai/gpt-4.1-mini` via OpenRouter                            |
 | Fine-tune base                               | `Qwen/Qwen3-4B-Instruct-2507` — verify exact repo id before use |
 
@@ -116,7 +116,7 @@ to sampling luck:
 | `sensory`    | Concrete sensory language — taste, aroma, texture, temperature.                |
 | `quantified` | Foreground numbers: volume, servings, percentages, counts.                     |
 | `use_case`   | Concrete situations and moments where this drink fits.                         |
-| `assurance`  | Trust signals present in the source: brand provenance, rating, certifications. |
+| `assurance`  | Trust signals present in the source: brand provenance and certifications. |
 
 
 Plus `probe` (deliberately vague, no concrete facts) generated for the pilot
@@ -136,7 +136,7 @@ Output `data/variants.jsonl`, one row per product × intent × arm:
 
 ```json
 {"parent_asin": "B0...", "intent": "health", "arm": "direct",
- "text": "...", "words": 71, "model": "stealth/space-bunny-alpha"}
+ "text": "...", "words": 71, "model": "google/gemini-2.5-flash-lite"}
 ```
 
 Resumable: skip `(parent_asin, intent, arm)` triples already on disk.
@@ -162,8 +162,8 @@ is large and is not otherwise controlled.
 
 **Prompt.** System prompt casts the model as a shopping assistant returning a
 full ranking. User prompt contains the intent `shopper` line and 8 option
-cards, each with `option_id`, title, brand, price, rating, review count, and
-the assigned variant text. Require JSON:
+cards, each with `option_id`, title, brand, price, and the assigned variant
+text. Require JSON:
 
 ```json
 {"ranking": ["O3", "O7", "O1", "O5", "O2", "O8", "O4", "O6"]}
@@ -229,8 +229,10 @@ memorised string.
 
 - system: `You write product descriptions for non-alcoholic drinks that rank highly with AI shopping agents.`
 - user: intent label and brief, then the product facts — title, brand, price,
-rating, review count, bullet features. **Do not include the original
-description**, or the model learns to paraphrase rather than to write.
+bullet features. **Do not include rating, review count, or the original
+description.** Rating and review count would let the model lean on popularity
+instead of the listing facts, and the original description would teach it to
+paraphrase rather than to write.
 - assistant: the winning variant text.
 
 Quality gate on the rank-2 example: emit it only if its score beats the

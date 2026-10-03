@@ -55,7 +55,10 @@ def select_holdout(asins: list[str], n: int, seed: int = HOLDOUT_SEED) -> list[s
 
 
 def sft_user(product: dict[str, Any], intent_key: str) -> str:
-    """Facts the model is allowed to see. The original description is omitted."""
+    """Facts the model is allowed to see.
+
+    Rating, review count, and the original description are omitted.
+    """
     intent = INTENTS[intent_key]
     features = " | ".join(product.get("features") or []) or "(none listed)"
     brand = product.get("store") or "Unknown"
@@ -67,7 +70,6 @@ def sft_user(product: dict[str, Any], intent_key: str) -> str:
         f"Title: {product.get('title')}\n"
         f"Brand: {brand}\n"
         f"Price: {price_s}\n"
-        f"Rating: {product.get('average_rating')} from {product.get('rating_number')} reviews\n"
         f"Bullet features: {features}\n"
         "Write the product description."
     )

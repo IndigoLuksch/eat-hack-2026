@@ -19,5 +19,8 @@ data/*
 !data/.gitkeep
 !data/study_products.jsonl
 !data/panels.json
+!data/product_images.json
 !data/variants.jsonl
 !data/rankings.jsonl
+!data/half_a/
+!data/half_b/

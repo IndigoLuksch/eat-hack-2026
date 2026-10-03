@@ -42,7 +42,7 @@ SYSTEM = (
     "- Use ONLY facts present in the supplied listing. Never invent ingredients, "
     "certifications, health claims, awards or nutritional numbers.\n"
     "- If the listing does not support a claim, leave it out silently.\n"
-    "- Never mention alcohol.\n"
+    "- Never mention alcohol, star ratings, review counts, or customer reviews.\n"
     "- Write flowing prose. No headings, no markdown, no bullet characters.\n"
     '- Return JSON only: {"description": "..."}'
 )
@@ -73,7 +73,6 @@ def product_brief(product: dict[str, Any]) -> str:
         f"Title: {product.get('title')}\n"
         f"Brand: {product.get('store')}\n"
         f"Price: {price_s}\n"
-        f"Rating: {product.get('average_rating')} from {product.get('rating_number')} reviews\n"
         f"Category: {product.get('category')}\n"
         f"Bullet features: {features}\n"
         f"Existing description: {product.get('description_text')}\n"

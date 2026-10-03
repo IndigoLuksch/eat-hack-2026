@@ -199,6 +199,8 @@ class FinetuneData(unittest.TestCase):
         messages = prompt_messages(_product("P1"), "flavour")
         self.assertEqual(len(messages), 2)
         self.assertNotIn("SECRET_ORIGINAL", messages[1]["content"])
+        self.assertNotIn("4.8", messages[1]["content"])
+        self.assertNotIn("100", messages[1]["content"])
         self.assertIn("Flavour", messages[1]["content"])
 
 

@@ -1,0 +1,194 @@
+[
+  {
+    "panel_id": "P001",
+    "category": "Fruit Juice",
+    "price_min": 25.18,
+    "price_max": 26.48,
+    "parent_asins": [
+      "B00B9BWZKM",
+      "B013PHKYKK",
+      "B07XYDG2J9",
+      "B07QZ42M73",
+      "B07J4J1WBN",
+      "B079Y7GMY4",
+      "B0097O5HQ2",
+      "B003TSRLWA"
+    ]
+  },
+  {
+    "panel_id": "P003",
+    "category": "Fruit Juice",
+    "price_min": 32.99,
+    "price_max": 34.89,
+    "parent_asins": [
+      "B01KVQQG50",
+      "B08X9CYVN4",
+      "B00EPNWHL8",
+      "B076DJK35K",
+      "B07QK1XL4M",
+      "B000X9D8ZM",
+      "B09ML1S54B",
+      "B01EHZZV4S"
+    ]
+  },
+  {
+    "panel_id": "P005",
+    "category": "Fruit Juice",
+    "price_min": 26.48,
+    "price_max": 27.0,
+    "parent_asins": [
+      "B0025UABJI",
+      "B075CS8WF3",
+      "B01MRSPEB1",
+      "B08HPSLF6D",
+      "B0025UCDS0",
+      "B07DMLG8BN",
+      "B0050O7UGS",
+      "B08JM84DQ5"
+    ]
+  },
+  {
+    "panel_id": "P007",
+    "category": "Fruit Juice",
+    "price_min": 12.14,
+    "price_max": 13.52,
+    "parent_asins": [
+      "B01MY8L092",
+      "B0716CPHZL",
+      "B003DQMMUE",
+      "B005PSQFGU",
+      "B00WTC8Q94",
+      "B07H1ZD4D9",
+      "B00WSPRFB2",
+      "B0967GCQHC"
+    ]
+  },
+  {
+    "panel_id": "P009",
+    "category": "Fruit Juice",
+    "price_min": 22.99,
+    "price_max": 23.81,
+    "parent_asins": [
+      "B009BR5JVI",
+      "B09G8VRDB7",
+      "B0C7KY7Z8Q",
+      "B0025VTH42",
+      "B0025VRCHG",
+      "B0C6DLQNG3",
+      "B08H48LTQG",
+      "B000FGRZKW"
+    ]
+  },
+  {
+    "panel_id": "P011",
+    "category": "Fruit Juice",
+    "price_min": 8.08,
+    "price_max": 8.79,
+    "parent_asins": [
+      "B00C1WEJ0C",
+      "B0041M3PSM",
+      "B001SAQQ3G",
+      "B000RAJZ6I",
+      "B01JI78XDG",
+      "B074H6M3QJ",
+      "B0B1S8LL54",
+      "B01M71DG0E"
+    ]
+  },
+  {
+    "panel_id": "P013",
+    "category": "Fruit Juice",
+    "price_min": 11.22,
+    "price_max": 12.06,
+    "parent_asins": [
+      "B014PZB0JA",
+      "B09GYSNG7X",
+      "B089X2V5ZK",
+      "B088CJB1ZJ",
+      "B001SAWH1Q",
+      "B074JJSGSY",
+      "B016389PVC",
+      "B08FW6FLNW"
+    ]
+  },
+  {
+    "panel_id": "P015",
+    "category": "Fruit Juice",
+    "price_min": 29.99,
+    "price_max": 32.61,
+    "parent_asins": [
+      "B08KYJMSXQ",
+      "B00Q3B7N8W",
+      "B08HPS95VP",
+      "B07BQ94DCF",
+      "B008N1G0ZM",
+      "B0BXLYYWJS",
+      "B08MXLTZ76",
+      "B07WNKHVWC"
+    ]
+  },
+  {
+    "panel_id": "P017",
+    "category": "Fruit Juice",
+    "price_min": 7.29,
+    "price_max": 7.99,
+    "parent_asins": [
+      "B0083KZYTQ",
+      "B0788BN8DQ",
+      "B07LF2TGH3",
+      "B07MNJPG7J",
+      "B0C6HBFFMD",
+      "B010R3MOU8",
+      "B074H6YPFT",
+      "B000RAJZ7M"
+    ]
+  },
+  {
+    "panel_id": "P019",
+    "category": "Fruit Juice",
+    "price_min": 9.74,
+    "price_max": 10.99,
+    "parent_asins": [
+      "B075CRC5ST",
+      "B000QVDJ6A",
+      "B00E5W8UEC",
+      "B00KLDMPGI",
+      "B09JCDXN39",
+      "B00VBQZJIU",
+      "B00VBQZD9K",
+      "B086GKSSGS"
+    ]
+  },
+  {
+    "panel_id": "P021",
+    "category": "Fruit Juice",
+    "price_min": 19.99,
+    "price_max": 20.89,
+    "parent_asins": [
+      "B09HWCXV55",
+      "B000R5M2JU",
+      "B08ZM2F335",
+      "B07J47B64Z",
+      "B0B2M5YCF7",
+      "B01N0SLA5L",
+      "B08RDTYJQW",
+      "B001SB0LVI"
+    ]
+  },
+  {
+    "panel_id": "P023",
+    "category": "Fruit Juice",
+    "price_min": 19.46,
+    "price_max": 19.99,
+    "parent_asins": [
+      "B07PGLQ4GZ",
+      "B081QRTP26",
+      "B0049D5GA8",
+      "B06XYVXV4Q",
+      "B00E9I7P20",
+      "B074S5TK9C",
+      "B0B1FX2ZPK",
+      "B09HWR6YZW"
+    ]
+  }
+]

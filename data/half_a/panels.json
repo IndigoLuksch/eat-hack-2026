@@ -1,0 +1,210 @@
+[
+  {
+    "panel_id": "P000",
+    "category": "Fruit Juice",
+    "price_min": 21.38,
+    "price_max": 22.99,
+    "parent_asins": [
+      "B01CPJ8EZQ",
+      "B00E02W62O",
+      "B099CRZQVQ",
+      "B003GADB02",
+      "B07N974NPQ",
+      "B01C7G00TA",
+      "B0B2KQ3BQV",
+      "B005OTEH3S"
+    ]
+  },
+  {
+    "panel_id": "P002",
+    "category": "Fruit Juice",
+    "price_min": 36.5,
+    "price_max": 38.5,
+    "parent_asins": [
+      "B0BRCGQ9C5",
+      "B09DDT26KL",
+      "B01N5MHVEO",
+      "B0B8S8TLWY",
+      "B005VBDR9O",
+      "B08H5RDPQT",
+      "B077NG5GRH",
+      "B08JHJ17RT"
+    ]
+  },
+  {
+    "panel_id": "P004",
+    "category": "Fruit Juice",
+    "price_min": 23.99,
+    "price_max": 25.0,
+    "parent_asins": [
+      "B07VSJ8VHM",
+      "B09RSMDWST",
+      "B07RM512N5",
+      "B00OOEGYC6",
+      "B0025UABMA",
+      "B0B6RRQYL2",
+      "B09B33ZMSP",
+      "B0874573KB"
+    ]
+  },
+  {
+    "panel_id": "P006",
+    "category": "Fruit Juice",
+    "price_min": 13.68,
+    "price_max": 14.94,
+    "parent_asins": [
+      "B07XYFJ3KX",
+      "B0078DPFES",
+      "B00724IF2M",
+      "B004UETCWO",
+      "B08P41GYJL",
+      "B000VDUM4A",
+      "B000R5IONI",
+      "B00YNH4NM2"
+    ]
+  },
+  {
+    "panel_id": "P008",
+    "category": "Fruit Juice",
+    "price_min": 29.95,
+    "price_max": 29.99,
+    "parent_asins": [
+      "B016LADCNO",
+      "B00NBJDGXK",
+      "B000V6BW14",
+      "B0713Y5VZG",
+      "B0CB5M3JBP",
+      "B09HN9S4P9",
+      "B08LZYXBLK",
+      "B09Q9WWPTR"
+    ]
+  },
+  {
+    "panel_id": "P010",
+    "category": "Fruit Juice",
+    "price_min": 28.79,
+    "price_max": 29.95,
+    "parent_asins": [
+      "B07S6Z9X5B",
+      "B07HPB2RWD",
+      "B09JTRYNB4",
+      "B06XT3G9MT",
+      "B073V9LJ2Y",
+      "B000GATCRQ",
+      "B06ZZNY5PC",
+      "B07H4SRX9J"
+    ]
+  },
+  {
+    "panel_id": "P012",
+    "category": "Fruit Juice",
+    "price_min": 14.99,
+    "price_max": 15.12,
+    "parent_asins": [
+      "B07FPM1F1X",
+      "B0939D98FH",
+      "B0BK2F6SVT",
+      "B08XS52DC1",
+      "B000GAUUS6",
+      "B00Y1EQ54Q",
+      "B07XYCZFMZ",
+      "B08BD8X7XC"
+    ]
+  },
+  {
+    "panel_id": "P014",
+    "category": "Fruit Juice",
+    "price_min": 8.94,
+    "price_max": 9.65,
+    "parent_asins": [
+      "B00004SR1J",
+      "B00SV2Q44A",
+      "B07D1M19Z4",
+      "B0788C3C9B",
+      "B000F8JIIC",
+      "B08LZWRVGN",
+      "B001RNX4W0",
+      "B00LIBFS9S"
+    ]
+  },
+  {
+    "panel_id": "P016",
+    "category": "Fruit Juice",
+    "price_min": 15.74,
+    "price_max": 17.3,
+    "parent_asins": [
+      "B01M3R0AVM",
+      "B001BKPLCK",
+      "B08Z19H1F2",
+      "B004RJDF98",
+      "B0178FC0FM",
+      "B09HNL65Z2",
+      "B075CTT979",
+      "B08VPR6Y4T"
+    ]
+  },
+  {
+    "panel_id": "P018",
+    "category": "Fruit Juice",
+    "price_min": 27.4,
+    "price_max": 28.43,
+    "parent_asins": [
+      "B0C6HCM14C",
+      "B00UASFEDU",
+      "B003ZRXP2A",
+      "B00749J7TA",
+      "B074PD66QS",
+      "B00D8I9E9O",
+      "B0013G6B1C",
+      "B0025UCBFA"
+    ]
+  },
+  {
+    "panel_id": "P020",
+    "category": "Fruit Juice",
+    "price_min": 34.99,
+    "price_max": 36.43,
+    "parent_asins": [
+      "B09HKZJGKK",
+      "B00E8IM92W",
+      "B06X1714LR",
+      "B07DVHDPBD",
+      "B0B3FMF45N",
+      "B003Z6SQLQ",
+      "B006OC3K9G",
+      "B00IITJQTQ"
+    ]
+  },
+  {
+    "panel_id": "P022",
+    "category": "Fruit Juice",
+    "price_min": 18.55,
+    "price_max": 19.4,
+    "parent_asins": [
+      "B0B5K9YPSH",
+      "B07FTT852B",
+      "B004AMHIJU",
+      "B08V5GXNK3",
+      "B09VPP62B2",
+      "B09WBHX84P",
+      "B000ZII98W",
+      "B00FBP39PC"
+    ]
+  },
+  {
+    "panel_id": "P024",
+    "category": "Fruit Juice",
+    "price_min": 17.49,
+    "price_max": 18.44,
+    "parent_asins": [
+      "B004ZH8QHS",
+      "B09YBRXXR9",
+      "B08RCTGDR7",
+      "B09HVDT8YQ",
+      "B08RCRRFJD",
+      "B00L6IB2P2",
+      "B00ZGTAK9Q",
+      "B001O8MMMQ"
+    ]
+  }
+]
