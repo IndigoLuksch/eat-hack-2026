@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: eat-hack-demo
+    runtime: docker
+    plan: pro_max
+    healthCheckPath: /health
+    envVars:
+      - key: DEMO_BACKEND
+        value: trl
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: DEMO_ADAPTER
+        sync: false
+      - key: HF_TOKEN
+        sync: false

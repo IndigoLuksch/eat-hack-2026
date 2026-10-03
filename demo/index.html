@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Description</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <section id="write">
+      <div class="panel">
+        <p class="label">Your task</p>
+        <h1>Write a product description that is likely to appeal to this shopper's AI agent.</h1>
+      </div>
+      <div class="panel">
+        <p class="label">Shopper request</p>
+        <p id="shopper"></p>
+      </div>
+      <div class="panel product">
+        <img id="photo" alt="">
+        <div class="product-body">
+          <h2 id="title"></h2>
+          <ul id="features"></ul>
+        </div>
+      </div>
+      <div class="panel">
+        <label class="label" for="draft">Your description</label>
+        <textarea id="draft" rows="6"></textarea>
+        <div class="bar">
+          <p id="count" class="count"><span id="words">0</span> / 70</p>
+          <button type="button" id="rank" disabled>Compare with our model <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="wait" hidden>
+      <div class="panel">
+        <p id="status">Writing</p>
+        <button type="button" id="back" hidden>Again</button>
+      </div>
+    </section>
+
+    <section id="result" hidden>
+      <p class="label">1 is best</p>
+      <div class="cols">
+        <article id="you" class="panel col">
+          <p class="who">You</p>
+          <p class="mean"></p>
+          <p class="places"></p>
+          <p class="copy"></p>
+        </article>
+        <article id="model" class="panel col">
+          <p class="who">Model</p>
+          <p class="mean"></p>
+          <p class="places"></p>
+          <p class="copy"></p>
+        </article>
+      </div>
+      <button type="button" id="again">Again</button>
+    </section>
+  </main>
+  <script>
+    const write = document.getElementById("write")
+    const wait = document.getElementById("wait")
+    const result = document.getElementById("result")
+    const draft = document.getElementById("draft")
+    const rankBtn = document.getElementById("rank")
+    const words = document.getElementById("words")
+    const status = document.getElementById("status")
+    const back = document.getElementById("back")
+    let current = null
+    let intent = ""
+
+    function show(which) {
+      write.hidden = which !== "write"
+      wait.hidden = which !== "wait"
+      result.hidden = which !== "result"
+    }
+
+    function wordCount(value) {
+      const text = value.trim()
+      return text ? text.split(/\s+/).length : 0
+    }
+
+    function renderCase(data) {
+      current = data
+      intent = data.intent
+      document.getElementById("photo").src = data.image
+      document.getElementById("photo").alt = data.title
+      document.getElementById("title").textContent = data.title
+      const list = document.getElementById("features")
+      list.replaceChildren()
+      for (const feature of data.features) {
+        const item = document.createElement("li")
+        item.textContent = feature
+        list.appendChild(item)
+      }
+      const spec = data.intents.find((item) => item.key === intent)
+      document.getElementById("shopper").textContent = spec ? spec.shopper : ""
+      draft.value = ""
+      words.textContent = "0"
+      rankBtn.disabled = true
+      show("write")
+      draft.focus({ preventScroll: true })
+      window.scrollTo(0, 0)
+    }
+
+    function fill(id, side, mark) {
+      const column = document.getElementById(id)
+      column.classList.remove("better", "worse")
+      if (mark) column.classList.add(mark)
+      column.querySelector(".mean").textContent = Number(side.mean).toFixed(1)
+      column.querySelector(".places").textContent = side.places.join("  ")
+      column.querySelector(".copy").textContent = side.text
+    }
+
+    function showResult(payload) {
+      const winner = payload.winner
+      fill("you", payload.user, winner === "user" ? "better" : winner === "model" ? "worse" : "")
+      fill("model", payload.model, winner === "model" ? "better" : winner === "user" ? "worse" : "")
+      show("result")
+    }
+
+    function fail(message) {
+      status.textContent = message
+      back.hidden = false
+      show("wait")
+    }
+
+    async function loadCase(exclude) {
+      const query = exclude ? "?exclude=" + encodeURIComponent(exclude) : ""
+      const response = await fetch("/api/case" + query)
+      if (!response.ok) throw new Error("case")
+      renderCase(await response.json())
+    }
+
+    async function submit() {
+      const text = draft.value.trim()
+      if (!text || !current) return
+      status.textContent = "Writing"
+      back.hidden = true
+      show("wait")
+      let response
+      try {
+        response = await fetch("/api/rank", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            parent_asin: current.parent_asin,
+            intent,
+            text,
+          }),
+        })
+      } catch (error) {
+        fail("Ranking failed.")
+        return
+      }
+      if (!response.ok || !response.body) {
+        fail("Ranking failed.")
+        return
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+      let settled = false
+      while (true) {
+        const chunk = await reader.read()
+        if (chunk.done) break
+        buffer += decoder.decode(chunk.value, { stream: true })
+        const parts = buffer.split("\n\n")
+        buffer = parts.pop()
+        for (const part of parts) {
+          const line = part.split("\n").find((item) => item.startsWith("data: "))
+          if (!line) continue
+          let event
+          try {
+            event = JSON.parse(line.slice(6))
+          } catch (error) {
+            continue
+          }
+          if (event.phase === "writing") status.textContent = "Writing"
+          if (event.phase === "ranking") {
+            status.textContent = event.done ? "Ranking " + event.done + " / " + event.total : "Ranking"
+          }
+          if (event.phase === "error") {
+            settled = true
+            fail(event.message || "Ranking failed.")
+          }
+          if (event.phase === "done") {
+            settled = true
+            showResult(event.result)
+          }
+        }
+      }
+      if (!settled) fail("Ranking failed.")
+    }
+
+    draft.addEventListener("input", () => {
+      const count = wordCount(draft.value)
+      words.textContent = String(count)
+      rankBtn.disabled = count === 0
+    })
+    rankBtn.addEventListener("click", () => { submit() })
+    document.getElementById("again").addEventListener("click", () => {
+      loadCase(current && current.parent_asin).catch(() => fail("Ranking failed."))
+    })
+    back.addEventListener("click", () => {
+      loadCase(current && current.parent_asin).catch(() => fail("Ranking failed."))
+    })
+    loadCase("").catch(() => fail("Ranking failed."))
+  </script>
+</body>
+</html>

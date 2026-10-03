@@ -1,0 +1,15 @@
+.venv
+.hf_cache
+.git
+outputs
+.env
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+data/drinks.jsonl
+data/variants.jsonl
+data/rankings.jsonl
+data/variant_scores.json
+*.md
+tests
