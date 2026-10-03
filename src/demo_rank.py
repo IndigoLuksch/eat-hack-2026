@@ -9,7 +9,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
-N_REPS = 5
+N_REPS = 10
 SOURCES = ("user", "model", "qwen", "opus")
 
 

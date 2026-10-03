@@ -64,7 +64,7 @@ Fine-tuning is compared against a **prompt-only baseline** (a strong model told 
 
 ### Demo
 
-[Live demo](https://eat-hack-demo.onrender.com/) — write a description for a real product and shopper request; compare average rank against BotBait and Claude Opus across five ranking rounds with shared display orders.
+[Live demo](https://eat-hack-demo.onrender.com/) — write a description for a real product and shopper request; compare average rank against BotBait and Claude Opus across ten ranking rounds with shared display orders.
 
 Writer backend is swappable via `DEMO_BACKEND` (`modal` + `DEMO_MODAL_URL`, `mlx` / `trl` + `DEMO_ADAPTER`, or `openrouter`). The live demo uses Modal for both the fine-tune ([lollygag/qwen3-4b-juice-descriptions](https://huggingface.co/lollygag/qwen3-4b-juice-descriptions)) and the untuned base ([Qwen/Qwen3-4B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507)).
 
