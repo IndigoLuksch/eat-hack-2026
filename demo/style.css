@@ -7,6 +7,8 @@
   --green: #e4f0e1;
   --pink-ink: #8d4d62;
   --green-ink: #3d6b49;
+  --board-gap: 0.7rem;
+  --panel-x: 1.2rem;
 }
 
 * { box-sizing: border-box; }
@@ -42,7 +44,7 @@ main.wide { max-width: 68rem; }
 .panel {
   background: #fff;
   border: 1px solid var(--line);
-  padding: 1.15rem 1.2rem 1.25rem;
+  padding: 1.15rem var(--panel-x) 1.25rem;
 }
 
 .label {
@@ -206,7 +208,7 @@ button {
 .board {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.7rem;
+  gap: var(--board-gap);
 }
 
 .graph-span { grid-column: 1 / -1; }
@@ -261,30 +263,65 @@ button {
 .mean-label { color: var(--muted); }
 .record { margin-top: 0.7rem; }
 
-.graph svg {
-  display: block;
-  width: 100%;
-  height: 13rem;
+.graph { position: relative; }
+
+.plot {
+  position: relative;
+  height: 18rem;
 }
 
-.graph .grid {
-  stroke: rgba(22, 22, 22, 0.12);
-  stroke-width: 1;
+.scale, .lanes { position: absolute; inset: 0; }
+
+.lanes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--board-gap) + 2 * var(--panel-x));
 }
 
-.graph .error { stroke: currentColor; stroke-width: 3; fill: none; }
-.graph .dot { fill: currentColor; }
-.graph .series-you { color: var(--green-ink); }
-.graph .series-model { color: var(--pink-ink); }
+.lane { position: relative; }
+.series-you { color: var(--green-ink); }
+.series-model { color: var(--pink-ink); }
 
-.graph .tick-label,
-.graph .row-label {
-  font-family: inherit;
-  font-size: 14px;
+.gridline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(22, 22, 22, 0.12);
 }
 
-.graph .tick-label { fill: var(--muted); }
-.graph .row-label { fill: currentColor; font-weight: 700; }
+.tick {
+  position: absolute;
+  right: calc(100% + 0.45rem);
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.whisker, .cap, .dot {
+  position: absolute;
+  left: 50%;
+  background: currentColor;
+}
+
+.whisker {
+  width: 2px;
+  transform: translateX(-50%);
+}
+
+.cap {
+  width: 0.85rem;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
 
 .graph-note {
   margin: 0.2rem 0 0;
