@@ -1,7 +1,9 @@
 """The demo page and the ranking API.
 
-The process binds its port before the fine-tune is loaded, so a health check
-succeeds while the weights are still coming in. Ranking waits on that load.
+The process binds its port before the writer is ready, so a health check
+succeeds while a local fine-tune is still loading. Ranking waits on that load.
+With DEMO_BACKEND=openrouter the writer is a cheap hosted model and is ready
+immediately.
 """
 
 from __future__ import annotations

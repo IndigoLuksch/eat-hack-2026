@@ -1,8 +1,9 @@
-"""Keep one fine-tuned model resident for the demo.
+"""Keep one description writer resident for the demo.
 
-`mlx` is the Apple Silicon path. `trl` loads a PEFT adapter with transformers,
-which is what Render's Linux instances can run. The adapter is a local
-directory or a Hugging Face repo id, downloaded on first use.
+`openrouter` calls a cheap hosted model. That is the stand-in while the
+fine-tune is still training. `mlx` is the Apple Silicon path. `trl` loads a
+PEFT adapter with transformers, which is what a Linux box can run. The adapter
+is a local directory or a Hugging Face repo id, downloaded on first use.
 """
 
 from __future__ import annotations
@@ -10,10 +11,12 @@ from __future__ import annotations
 import os
 import re
 import threading
+import time
 from pathlib import Path
 from typing import Any, Optional
 
-from src.config import BASE_MODEL
+from src.config import BASE_MODEL, OPENROUTER_BASE_URL, VARIANT_MODEL
+from src.llm import _HEADERS
 
 _REPO_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$")
 
@@ -111,6 +114,50 @@ class _MlxGenerator:
         return str(text).strip()
 
 
+class _OpenRouterGenerator:
+    """Same training prompt as the fine-tune, answered by a hosted model."""
+
+    def __init__(self, model: str, client: Any = None) -> None:
+        self.model = model
+        if client is not None:
+            self.client = client
+            return
+        key = os.getenv("OPENROUTER_API_KEY", "").strip()
+        if not key:
+            raise RuntimeError(
+                "OPENROUTER_API_KEY is not set. Copy .env.example to .env and add your key."
+            )
+        from openai import OpenAI
+
+        self.client = OpenAI(base_url=OPENROUTER_BASE_URL, api_key=key, default_headers=_HEADERS)
+
+    def generate(self, messages: list[dict[str, str]], max_new_tokens: int, temperature: float) -> str:
+        prompt = [dict(message) for message in messages]
+        if prompt and prompt[-1].get("role") == "user":
+            prompt[-1]["content"] = (
+                f"{prompt[-1]['content']}\n"
+                "Write about 70 words of flowing prose. No headings, markdown, or bullet characters."
+            )
+        last: Exception | None = None
+        for attempt in range(3):
+            try:
+                resp = self.client.chat.completions.create(
+                    model=self.model,
+                    temperature=temperature,
+                    max_tokens=max(max_new_tokens, 320),
+                    messages=prompt,
+                )
+                content = resp.choices[0].message.content or ""
+                text = content.strip()
+                if text:
+                    return text
+                raise RuntimeError("empty completion")
+            except Exception as exc:  # noqa: BLE001 - one transient failure should not end the demo
+                last = exc
+                time.sleep(min(2**attempt, 4))
+        raise RuntimeError(f"description request failed: {last}")
+
+
 class ResidentModel:
     """Loads in the background. Requests wait until `ready` is set."""
 
@@ -127,12 +174,16 @@ class ResidentModel:
 
     def load(self) -> None:
         try:
-            backend = os.getenv("DEMO_BACKEND", "").strip()
+            backend = os.getenv("DEMO_BACKEND", "openrouter").strip() or "openrouter"
+            if backend == "openrouter":
+                model_name = os.getenv("DEMO_MODEL", "").strip() or VARIANT_MODEL
+                self._generator = _OpenRouterGenerator(model_name)
+                return
             spec = os.getenv("DEMO_ADAPTER", "").strip()
             if backend not in {"mlx", "trl"}:
-                raise RuntimeError("Set DEMO_BACKEND to mlx or trl, and DEMO_ADAPTER.")
+                raise RuntimeError("Set DEMO_BACKEND to openrouter, mlx, or trl.")
             if not spec:
-                raise RuntimeError("Set DEMO_BACKEND to mlx or trl, and DEMO_ADAPTER.")
+                raise RuntimeError("Set DEMO_ADAPTER to a local directory or a Hugging Face repo id.")
             adapter = resolve_adapter(spec)
             if backend == "mlx":
                 self._generator = _MlxGenerator(self.base_model, adapter)

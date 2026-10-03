@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 from src.demo_catalog import Catalog, image_url, load_catalog, short_features
-from src.demo_model import resolve_adapter
+from src.demo_model import _OpenRouterGenerator, resolve_adapter
 from src.demo_rank import build_cards, place, shared_orders, summarise_places, target_option_id
 
 
@@ -34,6 +34,57 @@ class AdapterPath(unittest.TestCase):
     def test_missing_path_is_not_downloaded(self) -> None:
         with self.assertRaises(FileNotFoundError):
             resolve_adapter("/no/such/adapter")
+
+
+class _FakeMessage:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+
+class _FakeChoice:
+    def __init__(self, content: str) -> None:
+        self.message = _FakeMessage(content)
+
+
+class _FakeResponse:
+    def __init__(self, content: str) -> None:
+        self.choices = [_FakeChoice(content)]
+
+
+class _FakeCompletions:
+    def __init__(self, content: str) -> None:
+        self.content = content
+        self.kwargs: dict = {}
+
+    def create(self, **kwargs: object) -> _FakeResponse:
+        self.kwargs = kwargs
+        return _FakeResponse(self.content)
+
+
+class _FakeClient:
+    def __init__(self, content: str) -> None:
+        self.completions = _FakeCompletions(content)
+        self.chat = self
+
+
+class OpenRouterWriter(unittest.TestCase):
+    def test_uses_the_training_prompt_and_pins_length(self) -> None:
+        client = _FakeClient("Pressed apple juice with nothing added.")
+        writer = _OpenRouterGenerator("google/gemini-2.5-flash-lite", client=client)
+        text = writer.generate(
+            [
+                {"role": "system", "content": "Write descriptions."},
+                {"role": "user", "content": "Title: Apple juice"},
+            ],
+            max_new_tokens=180,
+            temperature=0.7,
+        )
+        self.assertEqual(text, "Pressed apple juice with nothing added.")
+        sent = client.completions.kwargs
+        self.assertEqual(sent["model"], "google/gemini-2.5-flash-lite")
+        self.assertEqual(sent["messages"][0]["content"], "Write descriptions.")
+        self.assertIn("Title: Apple juice", sent["messages"][1]["content"])
+        self.assertIn("about 70 words", sent["messages"][1]["content"])
 
 
 class ImageAndFeatures(unittest.TestCase):

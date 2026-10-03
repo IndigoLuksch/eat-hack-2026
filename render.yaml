@@ -2,14 +2,12 @@ services:
   - type: web
     name: eat-hack-demo
     runtime: docker
-    plan: pro_max
+    plan: starter
     healthCheckPath: /health
     envVars:
       - key: DEMO_BACKEND
-        value: trl
+        value: openrouter
+      - key: DEMO_MODEL
+        value: google/gemini-2.5-flash-lite
       - key: OPENROUTER_API_KEY
-        sync: false
-      - key: DEMO_ADAPTER
-        sync: false
-      - key: HF_TOKEN
         sync: false
