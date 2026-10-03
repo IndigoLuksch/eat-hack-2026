@@ -166,6 +166,22 @@ button {
 .col.better { background: var(--green); }
 .col.worse { background: var(--pink); }
 
+.verdict h1 {
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.verdict.you h1 { color: var(--green-ink); }
+.verdict.model h1 { color: var(--pink-ink); }
+
+#verdict-detail {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
 .who {
   margin: 0;
   font-size: 0.68rem;
@@ -186,20 +202,50 @@ button {
 .col.better .mean { color: var(--green-ink); }
 .col.worse .mean { color: var(--pink-ink); }
 
-.places {
+.mean-label, .record {
   margin: 0.35rem 0 0;
-  color: var(--muted);
-  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.mean-label { color: var(--muted); }
+.record { margin-top: 0.7rem; }
+
+.run-head, .run {
+  display: grid;
+  grid-template-columns: 2rem 1fr 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.run-head {
+  margin-top: 0.85rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#runs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.run {
+  padding: 0.55rem 0;
+  border-top: 1px solid #e6e6e4;
   font-variant-numeric: tabular-nums;
 }
 
-.copy {
-  margin: 1rem 0 0;
-  font-size: 0.92rem;
-  line-height: 1.45;
-}
+.run-n { color: var(--muted); font-size: 0.8rem; }
+.ahead { color: var(--green-ink); font-weight: 600; }
 
-#result > .label { margin-bottom: -0.15rem; }
+.copy {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
 
 @media (max-width: 640px) {
   main { padding-top: 1.25rem; }

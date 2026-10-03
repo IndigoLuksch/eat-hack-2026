@@ -43,20 +43,40 @@
     </section>
 
     <section id="result" hidden>
-      <p class="label">1 is best</p>
+      <div id="verdict" class="panel verdict">
+        <h1 id="verdict-title"></h1>
+        <p id="verdict-detail"></p>
+      </div>
       <div class="cols">
         <article id="you" class="panel col">
           <p class="who">You</p>
           <p class="mean"></p>
-          <p class="places"></p>
-          <p class="copy"></p>
+          <p class="mean-label">average place</p>
+          <p class="record"></p>
         </article>
         <article id="model" class="panel col">
           <p class="who">Model</p>
           <p class="mean"></p>
-          <p class="places"></p>
-          <p class="copy"></p>
+          <p class="mean-label">average place</p>
+          <p class="record"></p>
         </article>
+      </div>
+      <div class="panel">
+        <p id="runs-label" class="label">Rankings</p>
+        <div class="run run-head">
+          <span></span>
+          <span>You</span>
+          <span>Model</span>
+        </div>
+        <ol id="runs"></ol>
+      </div>
+      <div class="panel">
+        <p class="label">Your description</p>
+        <p id="you-copy" class="copy"></p>
+      </div>
+      <div class="panel">
+        <p class="label">Model's description</p>
+        <p id="model-copy" class="copy"></p>
       </div>
       <button type="button" id="again">Again</button>
     </section>
@@ -107,20 +127,94 @@
       window.scrollTo(0, 0)
     }
 
-    function fill(id, side, mark) {
+    function formatMean(value) {
+      return Number(value).toFixed(1)
+    }
+
+    function ordinal(place) {
+      const mod100 = place % 100
+      if (mod100 >= 11 && mod100 <= 13) return place + "th"
+      const mod10 = place % 10
+      if (mod10 === 1) return place + "st"
+      if (mod10 === 2) return place + "nd"
+      if (mod10 === 3) return place + "rd"
+      return place + "th"
+    }
+
+    function tally(userPlaces, modelPlaces) {
+      const score = { user: 0, model: 0 }
+      for (let i = 0; i < userPlaces.length; i++) {
+        if (userPlaces[i] < modelPlaces[i]) score.user += 1
+        else if (modelPlaces[i] < userPlaces[i]) score.model += 1
+      }
+      return score
+    }
+
+    function paintScore(id, side, mark, wins, total) {
       const column = document.getElementById(id)
       column.classList.remove("better", "worse")
       if (mark) column.classList.add(mark)
-      column.querySelector(".mean").textContent = Number(side.mean).toFixed(1)
-      column.querySelector(".places").textContent = side.places.join("  ")
-      column.querySelector(".copy").textContent = side.text
+      column.querySelector(".mean").textContent = formatMean(side.mean)
+      column.querySelector(".record").textContent = "Ahead in " + wins + " of " + total
     }
 
     function showResult(payload) {
-      const winner = payload.winner
-      fill("you", payload.user, winner === "user" ? "better" : winner === "model" ? "worse" : "")
-      fill("model", payload.model, winner === "model" ? "better" : winner === "user" ? "worse" : "")
+      const you = payload.user
+      const model = payload.model
+      const total = you.places.length
+      const score = tally(you.places, model.places)
+      const verdict = document.getElementById("verdict")
+      const title = document.getElementById("verdict-title")
+      const detail = document.getElementById("verdict-detail")
+      const youMean = formatMean(you.mean)
+      const modelMean = formatMean(model.mean)
+      verdict.classList.remove("you", "model")
+      if (payload.winner === "tie") {
+        title.textContent = "It's a tie."
+        detail.textContent = "You both averaged place " + youMean + ". 1st is best."
+        if (score.user !== score.model) {
+          const who = score.user > score.model ? "You were" : "The model was"
+          detail.textContent = "You both averaged place " + youMean + ", so neither description wins. " + who + " ahead more often. 1st is best."
+        }
+      } else if (payload.winner === "user") {
+        verdict.classList.add("you")
+        title.textContent = "You did better."
+        detail.textContent = "Your average place was " + youMean + ". The model's was " + modelMean + ". 1st is best."
+        if (score.user < score.model) {
+          detail.textContent += " The model was ahead more often, but your leads were larger."
+        }
+      } else {
+        verdict.classList.add("model")
+        title.textContent = "The model did better."
+        detail.textContent = "The model's average place was " + modelMean + ". Yours was " + youMean + ". 1st is best."
+        if (score.model < score.user) {
+          detail.textContent += " You were ahead more often, but the model's leads were larger."
+        }
+      }
+      paintScore("you", you, payload.winner === "user" ? "better" : payload.winner === "model" ? "worse" : "", score.user, total)
+      paintScore("model", model, payload.winner === "model" ? "better" : payload.winner === "user" ? "worse" : "", score.model, total)
+      document.getElementById("runs-label").textContent = total === 1 ? "1 ranking" : total + " rankings"
+      const runs = document.getElementById("runs")
+      runs.replaceChildren()
+      for (let i = 0; i < total; i++) {
+        const row = document.createElement("li")
+        row.className = "run"
+        const yours = document.createElement("span")
+        const theirs = document.createElement("span")
+        yours.textContent = ordinal(you.places[i])
+        theirs.textContent = ordinal(model.places[i])
+        if (you.places[i] < model.places[i]) yours.className = "ahead"
+        else if (model.places[i] < you.places[i]) theirs.className = "ahead"
+        const index = document.createElement("span")
+        index.className = "run-n"
+        index.textContent = String(i + 1)
+        row.append(index, yours, theirs)
+        runs.append(row)
+      }
+      document.getElementById("you-copy").textContent = you.text
+      document.getElementById("model-copy").textContent = model.text
       show("result")
+      window.scrollTo(0, 0)
     }
 
     function fail(message) {
@@ -182,7 +276,7 @@
           }
           if (event.phase === "writing") status.textContent = "Writing"
           if (event.phase === "ranking") {
-            status.textContent = event.done ? "Ranking " + event.done + " / " + event.total : "Ranking"
+            status.textContent = "Ranking " + event.done + " of " + event.total
           }
           if (event.phase === "error") {
             settled = true

@@ -170,15 +170,19 @@ async def rank(body: RankBody) -> StreamingResponse:
                 temperature=0.0,
                 max_tokens=300,
             )
-            total = N_REPS * 2
-            yield _sse({"phase": "ranking", "done": 0, "total": total})
+            yield _sse({"phase": "ranking", "done": 0, "total": N_REPS})
 
             user_places: list[Optional[int]] = [None] * N_REPS
             model_places: list[Optional[int]] = [None] * N_REPS
-            done = 0
+
+            def runs_done() -> int:
+                return sum(
+                    1
+                    for index in range(N_REPS)
+                    if user_places[index] is not None and model_places[index] is not None
+                )
 
             async def one(rep: int, source: str, description: str, order: list[str]) -> None:
-                nonlocal done
                 cards = build_cards(order, catalog.products, body.parent_asin, description)
                 ranking = await rank_cards(caller, body.intent, cards)
                 slot = place(ranking, target_option_id(cards, body.parent_asin))
@@ -186,7 +190,6 @@ async def rank(body: RankBody) -> StreamingResponse:
                     user_places[rep] = slot
                 else:
                     model_places[rep] = slot
-                done += 1
 
             for rep, order in enumerate(orders):
                 tasks.append(asyncio.create_task(one(rep, "user", text, order)))
@@ -200,11 +203,11 @@ async def rank(body: RankBody) -> StreamingResponse:
                     return_when=asyncio.FIRST_COMPLETED,
                 )
                 if not finished:
-                    yield _sse({"phase": "ranking", "done": done, "total": total})
+                    yield _sse({"phase": "ranking", "done": runs_done(), "total": N_REPS})
                     continue
                 for task in finished:
                     task.result()
-                yield _sse({"phase": "ranking", "done": done, "total": total})
+                yield _sse({"phase": "ranking", "done": runs_done(), "total": N_REPS})
 
             summary = summarise_places(
                 [int(slot) for slot in user_places],

@@ -1,6 +1,6 @@
 """Compare a visitor's description with the model's on one product's panel.
 
-Three repetitions. Within a repetition both rankings share a display order and
+Five repetitions. Within a repetition both rankings share a display order and
 the same seven competitor descriptions. Only the target product's text changes.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
-N_REPS = 3
+N_REPS = 5
 
 
 def shared_orders(asins: list[str], reps: int, rng: random.Random) -> list[list[str]]:
