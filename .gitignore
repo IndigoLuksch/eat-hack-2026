@@ -19,3 +19,5 @@ data/*
 !data/.gitkeep
 !data/study_products.jsonl
 !data/panels.json
+!data/variants.jsonl
+!data/rankings.jsonl
