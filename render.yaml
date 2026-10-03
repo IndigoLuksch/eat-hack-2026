@@ -9,11 +9,11 @@ services:
         value: modal
       - key: DEMO_MODAL_URL
         sync: false
+      - key: DEMO_MODAL_QWEN_URL
+        sync: false
       - key: DEMO_MODAL_TOKEN
         sync: false
       - key: BASELINE_MODEL
         value: anthropic/claude-opus-4.6
-      - key: BASE_QWEN_MODEL
-        value: qwen/qwen3-8b
       - key: OPENROUTER_API_KEY
         sync: false

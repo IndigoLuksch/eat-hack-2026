@@ -21,9 +21,9 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from src.build_finetune_data import prompt_messages
-from src.config import BASE_QWEN_MODEL, BASELINE_MODEL, INTENTS, RANK_MODEL, ROOT
+from src.config import BASELINE_MODEL, INTENTS, RANK_MODEL, ROOT
 from src.demo_catalog import Catalog, load_catalog
-from src.demo_model import ResidentModel, _OpenRouterGenerator
+from src.demo_model import ResidentModel, _ModalGenerator, _OpenRouterGenerator
 from src.demo_rank import (
     N_REPS,
     SOURCES,
@@ -43,13 +43,26 @@ MAX_WORDS = 400
 RANK_ATTEMPTS = 3
 # Some proxies buffer the first kilobytes of a stream. A comment flushes them.
 _PADDING = ":" + (" " * 2048) + "\n\n"
-# Qwen3-4B can think by default; keep it in the non-thinking Instruct mode.
-_QWEN_EXTRA = {"reasoning": {"effort": "none", "exclude": True}}
 
 catalog: Catalog
 model: ResidentModel
-qwen: _OpenRouterGenerator
+qwen: Any
 baseline: _OpenRouterGenerator
+
+
+def _qwen_writer() -> Any:
+    """Prefer the Modal-hosted Qwen3-4B base; fall back to OpenRouter."""
+    import os
+
+    url = os.getenv("DEMO_MODAL_QWEN_URL", "").strip()
+    if url:
+        return _ModalGenerator(url, os.getenv("DEMO_MODAL_TOKEN", ""))
+    from src.config import BASE_QWEN_MODEL
+
+    return _OpenRouterGenerator(
+        BASE_QWEN_MODEL,
+        extra_body={"reasoning": {"effort": "none", "exclude": True}},
+    )
 
 
 def _start_model() -> None:
@@ -58,7 +71,7 @@ def _start_model() -> None:
     model = ResidentModel()
     # Same OpenRouter key the ranker needs; construct here so a missing key
     # fails before the first visitor submits.
-    qwen = _OpenRouterGenerator(BASE_QWEN_MODEL, extra_body=_QWEN_EXTRA)
+    qwen = _qwen_writer()
     baseline = _OpenRouterGenerator(BASELINE_MODEL)
     threading.Thread(target=model.load, name="demo-model", daemon=True).start()
 
