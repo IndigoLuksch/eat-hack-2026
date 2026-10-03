@@ -1,9 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "src/app.py": {
+    "api/index.py": {
       "maxDuration": 60,
       "excludeFiles": "{tests/**,outputs/**,**/*.safetensors,data/rankings.jsonl,data/half_b/**}"
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
+  ]
 }
