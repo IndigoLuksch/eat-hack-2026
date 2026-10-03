@@ -62,6 +62,13 @@ h1, #shopper, #status {
   line-height: 1.4;
 }
 
+.brief {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
 #shopper::before { content: "\201C"; }
 #shopper::after { content: "\201D"; }
 
@@ -263,11 +270,42 @@ button {
 .mean-label { color: var(--muted); }
 .record { margin-top: 0.7rem; }
 
-.graph { position: relative; }
+.graph {
+  display: grid;
+  grid-template-columns: 1.35rem minmax(0, 1fr);
+  column-gap: 0.7rem;
+  align-items: start;
+  margin-left: -2.05rem;
+  width: calc(100% + 2.05rem);
+}
+
+.y-label {
+  height: 18rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.plot-col { min-width: 0; }
 
 .plot {
   position: relative;
   height: 18rem;
+}
+
+.x-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--board-gap) + 2 * var(--panel-x));
+  margin-top: 0.45rem;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1;
 }
 
 .scale, .lanes { position: absolute; inset: 0; }
@@ -291,7 +329,7 @@ button {
 
 .tick {
   position: absolute;
-  right: calc(100% + 0.45rem);
+  right: calc(100% + 0.28rem);
   transform: translateY(-50%);
   color: var(--muted);
   font-size: 0.75rem;

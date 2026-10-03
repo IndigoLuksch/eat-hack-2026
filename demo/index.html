@@ -47,6 +47,10 @@
 
     <section id="result" hidden>
       <div class="board">
+        <div class="panel graph-span">
+          <p class="label">The test</p>
+          <p class="brief">AI shopping agents were asked to rank products from a list of eight. Your description and the model's were each ranked five times against the same seven others. 1st is best.</p>
+        </div>
         <article id="you" class="panel col">
           <p class="who">You</p>
           <h1 class="outcome"></h1>
@@ -63,11 +67,18 @@
         </article>
         <div class="panel graph-span">
           <div class="graph">
-            <div class="plot">
-              <div class="scale"></div>
-              <div class="lanes">
-                <div class="lane series-you"></div>
-                <div class="lane series-model"></div>
+            <div class="y-label">rank</div>
+            <div class="plot-col">
+              <div class="plot">
+                <div class="scale"></div>
+                <div class="lanes">
+                  <div class="lane series-you"></div>
+                  <div class="lane series-model"></div>
+                </div>
+              </div>
+              <div class="x-labels">
+                <span class="series-you">you</span>
+                <span class="series-model">model</span>
               </div>
             </div>
           </div>
