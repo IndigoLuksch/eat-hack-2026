@@ -5,8 +5,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEMO_BACKEND=openrouter \
-    DEMO_MODEL=google/gemini-2.5-flash-lite
+    DEMO_BACKEND=modal
 
 COPY requirements-demo.txt .
 RUN pip install --no-cache-dir -r requirements-demo.txt

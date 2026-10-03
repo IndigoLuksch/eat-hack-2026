@@ -6,9 +6,11 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DEMO_BACKEND
-        value: openrouter
-      - key: DEMO_MODEL
-        value: google/gemini-2.5-flash-lite
+        value: modal
+      - key: DEMO_MODAL_URL
+        sync: false
+      - key: DEMO_MODAL_TOKEN
+        sync: false
       - key: BASELINE_MODEL
         value: anthropic/claude-opus-4.6
       - key: BASE_QWEN_MODEL

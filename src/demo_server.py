@@ -2,8 +2,8 @@
 
 The process binds its port before the writer is ready, so a health check
 succeeds while a local fine-tune is still loading. Ranking waits on that load.
-With DEMO_BACKEND=openrouter the writer is a cheap hosted model and is ready
-immediately.
+With DEMO_BACKEND=modal the BotBait writer is the fine-tune on Modal and is
+ready as soon as that endpoint answers. Ranking still waits if needed.
 """
 
 from __future__ import annotations

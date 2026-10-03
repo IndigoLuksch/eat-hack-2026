@@ -1,17 +1,20 @@
 """Keep one description writer resident for the demo.
 
-`openrouter` calls a cheap hosted model. That is the stand-in while the
-fine-tune is still training. `mlx` is the Apple Silicon path. `trl` loads a
-PEFT adapter with transformers, which is what a Linux box can run. The adapter
-is a local directory or a Hugging Face repo id, downloaded on first use.
+`modal` calls the fine-tune hosted on Modal (see `modal_writer.py`).
+`openrouter` is a cheap hosted stand-in. `mlx` is the Apple Silicon path.
+`trl` loads a PEFT adapter with transformers on a Linux box. The adapter is a
+local directory or a Hugging Face repo id, downloaded on first use.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import threading
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any, Optional
 
@@ -175,6 +178,55 @@ class _OpenRouterGenerator:
         raise RuntimeError(f"description request failed: {last}")
 
 
+class _ModalGenerator:
+    """Calls the fine-tune hosted by `modal_writer.py`."""
+
+    def __init__(self, url: str, token: Optional[str] = None) -> None:
+        self.url = url.strip()
+        if not self.url:
+            raise RuntimeError("Set DEMO_MODAL_URL to the Modal writer endpoint.")
+        self.token = (token or "").strip() or None
+
+    def generate(
+        self,
+        messages: list[dict[str, str]],
+        max_new_tokens: int = 180,
+        temperature: float = 0.7,
+    ) -> str:
+        payload = json.dumps(
+            {
+                "messages": messages,
+                "max_new_tokens": max_new_tokens,
+                "temperature": temperature,
+            }
+        ).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        last: Exception | None = None
+        for attempt in range(3):
+            request = urllib.request.Request(
+                self.url,
+                data=payload,
+                headers=headers,
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=300) as response:
+                    body = json.loads(response.read().decode("utf-8"))
+                text = _THINK_BLOCK.sub("", str(body.get("text") or "")).strip()
+                if text:
+                    return text
+                raise RuntimeError("empty completion")
+            except Exception as exc:  # noqa: BLE001 - cold starts and brief blips
+                last = exc
+                time.sleep(min(2**attempt, 8))
+        if isinstance(last, urllib.error.HTTPError):
+            detail = last.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"Modal writer failed ({last.code}): {detail}") from last
+        raise RuntimeError(f"Modal writer failed: {last}")
+
+
 class ResidentModel:
     """Loads in the background. Requests wait until `ready` is set."""
 
@@ -191,14 +243,20 @@ class ResidentModel:
 
     def load(self) -> None:
         try:
-            backend = os.getenv("DEMO_BACKEND", "openrouter").strip() or "openrouter"
+            backend = os.getenv("DEMO_BACKEND", "modal").strip() or "modal"
+            if backend == "modal":
+                self._generator = _ModalGenerator(
+                    os.getenv("DEMO_MODAL_URL", ""),
+                    os.getenv("DEMO_MODAL_TOKEN", ""),
+                )
+                return
             if backend == "openrouter":
                 model_name = os.getenv("DEMO_MODEL", "").strip() or VARIANT_MODEL
                 self._generator = _OpenRouterGenerator(model_name)
                 return
             spec = os.getenv("DEMO_ADAPTER", "").strip()
             if backend not in {"mlx", "trl"}:
-                raise RuntimeError("Set DEMO_BACKEND to openrouter, mlx, or trl.")
+                raise RuntimeError("Set DEMO_BACKEND to modal, openrouter, mlx, or trl.")
             if not spec:
                 raise RuntimeError("Set DEMO_ADAPTER to a local directory or a Hugging Face repo id.")
             adapter = resolve_adapter(spec)
