@@ -1,4 +1,6 @@
-# Shelf Shift — product descriptions optimised for AI shopping agents
+# BotBait — product descriptions optimised for AI shopping agents
+
+***[Demo website](https://eat-hack-demo.onrender.com/) — write your own product description and see how it ranks against our model and Claude Opus.***
 
 **EAT_HACK 2026 · Track 1: Human Truth**
 
@@ -7,8 +9,6 @@ When an AI shopping agent browses the web, it does not look at product images. I
 Using 200 real Amazon listings, we constructed catalogues of near-identical fruit juices. Each product has 6 alternate descriptions, and a random one is chosen for each catalogue. AI shopping agents were given customer requests (general, healthy choice, or best flavour) and were asked to rank products in 10,854 trials.
 
 Next, we used the winning descriptions to fine-tune Qwen3-4B LoRA. We also added a new input channel: customer request. Now, this custom LLM outputs product descriptions optimised for a customer’s request and targeted at AI shopping agents.
-
-The demo website allows you to write your own product description and see how well it performs compared to our model and Claude Opus: https://eat-hack-demo.onrender.com/
 
 ---
 

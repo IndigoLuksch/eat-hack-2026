@@ -22,7 +22,7 @@ T = TypeVar("T")
 # OpenRouter asks callers to identify themselves; harmless if unset.
 _HEADERS = {
     "HTTP-Referer": "https://github.com/eat-hack/description-optimiser",
-    "X-Title": "EAT_HACK description optimiser",
+    "X-Title": "BotBait description optimiser",
 }
 
 

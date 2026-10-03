@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Description</title>
+  <title>BotBait</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main>
+    <p class="brand">BotBait</p>
     <section id="write">
       <div class="panel">
         <p class="label">Your task</p>
@@ -80,7 +81,7 @@
           <p class="record"></p>
         </article>
         <article id="model" class="panel col" data-source="model">
-          <p class="who">Our model</p>
+          <p class="who">BotBait</p>
           <h1 class="outcome"></h1>
           <p class="mean"></p>
           <p class="mean-label">average rank</p>
@@ -115,7 +116,7 @@
               </div>
               <div class="x-labels">
                 <span class="series-you">you</span>
-                <span class="series-model">our model</span>
+                <span class="series-model">botbait</span>
                 <span class="series-qwen">qwen 4b</span>
                 <span class="series-opus">claude opus</span>
               </div>
@@ -128,7 +129,7 @@
           <p id="you-copy" class="copy"></p>
         </article>
         <article class="panel copy-col">
-          <p class="label">Our model's description</p>
+          <p class="label">BotBait's description</p>
           <p id="model-copy" class="copy"></p>
         </article>
         <article class="panel copy-col">
@@ -243,7 +244,7 @@
 
     const sides = [
       { id: "you", key: "user", series: ".series-you", copy: "you-copy", win: "You did better.", label: "You" },
-      { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "Our model did better.", label: "Our model" },
+      { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "BotBait did better.", label: "BotBait" },
       { id: "qwen", key: "qwen", series: ".series-qwen", copy: "qwen-copy", win: "Qwen 4B did better.", label: "Qwen 4B" },
       { id: "opus", key: "opus", series: ".series-opus", copy: "opus-copy", win: "Claude Opus did better.", label: "Claude Opus" },
     ]
@@ -358,7 +359,7 @@
           ? "Agents finished ranking the list of eight"
           : "Agent " + Math.min(done + 1, total) + " is ranking the list of eight"
       } else if (phase === "writing") {
-        agentCaption.textContent = "Our model, Qwen 4B, and Claude Opus are writing competing descriptions"
+        agentCaption.textContent = "BotBait, Qwen 4B, and Claude Opus are writing competing descriptions"
       } else {
         agentCaption.textContent = ""
       }
