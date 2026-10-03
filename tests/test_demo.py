@@ -167,11 +167,19 @@ class PairedRanking(unittest.TestCase):
         self.assertEqual(place(["O3", "O1", "O2"], "O1"), 2)
 
     def test_lower_mean_wins_and_equals_tie(self) -> None:
-        self.assertEqual(summarise_places([1, 2, 3], [4, 4, 4])["winner"], "user")
-        self.assertEqual(summarise_places([2, 2, 2], [1, 2, 2])["winner"], "model")
-        tied = summarise_places([1, 4], [2, 3])
+        self.assertEqual(
+            summarise_places([1, 2, 3], [4, 4, 4], [5, 5, 5])["winner"], "user"
+        )
+        self.assertEqual(
+            summarise_places([2, 2, 2], [1, 2, 2], [3, 3, 3])["winner"], "model"
+        )
+        self.assertEqual(
+            summarise_places([3, 3, 3], [2, 2, 2], [1, 1, 1])["winner"], "opus"
+        )
+        tied = summarise_places([1, 4], [2, 3], [4, 1])
         self.assertEqual(tied["winner"], "tie")
         self.assertEqual(tied["user"]["mean"], 2.5)
+        self.assertEqual(tied["opus"]["mean"], 2.5)
 
 
 class RankStream(unittest.TestCase):
@@ -191,19 +199,33 @@ class RankStream(unittest.TestCase):
             def generate(self, messages: list, max_new_tokens: int = 180, temperature: float = 0.7) -> str:
                 return "Model copy about this juice."
 
-        async def fake_rank(caller: object, intent_key: str, cards: list) -> list:
-            def sort_key(card: dict) -> int:
-                if str(card["text"]).startswith("USER"):
-                    return 0
-                if str(card["text"]).startswith("Model"):
-                    return 2
-                return 1
+        class FakeBaseline:
+            def generate(self, messages: list, max_new_tokens: int = 180, temperature: float = 0.7) -> str:
+                return "Opus copy about this juice."
 
-            return [card["option_id"] for card in sorted(cards, key=sort_key)]
+        async def fake_rank(caller: object, intent_key: str, cards: list) -> list:
+            # Each call has only one of the three contestants on the target slot.
+            target = next(
+                card
+                for card in cards
+                if str(card["text"]).startswith(("USER", "Model", "Opus"))
+            )
+            text = str(target["text"])
+            if text.startswith("USER"):
+                slot = 1
+            elif text.startswith("Opus"):
+                slot = 2
+            else:
+                slot = 8
+            others = [card["option_id"] for card in cards if card is not target]
+            ranking = others[:]
+            ranking.insert(slot - 1, target["option_id"])
+            return ranking
 
         server._start_model = lambda: (
             setattr(server, "catalog", server.load_catalog()),
             setattr(server, "model", FakeModel()),
+            setattr(server, "baseline", FakeBaseline()),
         )
         server.rank_cards = fake_rank
 
@@ -229,4 +251,6 @@ class RankStream(unittest.TestCase):
             self.assertEqual(done["result"]["user"]["places"], [1, 1, 1, 1, 1])
             self.assertEqual(done["result"]["model"]["text"], "Model copy about this juice.")
             self.assertEqual(done["result"]["model"]["places"], [8, 8, 8, 8, 8])
+            self.assertEqual(done["result"]["opus"]["text"], "Opus copy about this juice.")
+            self.assertEqual(done["result"]["opus"]["places"], [2, 2, 2, 2, 2])
             self.assertIn('"total": 5', body)

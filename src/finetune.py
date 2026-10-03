@@ -328,8 +328,11 @@ def train_mlx(
 
     epochs = 3 if stage == "sft" else 1
     learning_rate = 2e-4 if stage == "sft" else 5e-6
-    batch_size = 4
-    grad_accumulation = 4
+    # Apple Silicon: batch 4 @ 1024 OOMs on Metal for Qwen3-4B LoRA.
+    # Keep the effective batch (16) via grad accumulation.
+    batch_size = 1
+    grad_accumulation = 16
+    max_seq_length = 768
     iters = _mlx_iters(len(train_rows), batch_size, epochs)
     updates = max(1, math.ceil(iters / grad_accumulation))
     data_dir = ROOT / "outputs" / "mlx_data" / stage
@@ -359,7 +362,7 @@ def train_mlx(
             "grad_accumulation_steps": grad_accumulation,
             "adapter_path": str(output_dir),
             "save_every": iters,
-            "max_seq_length": 1024,
+            "max_seq_length": max_seq_length,
             "grad_checkpoint": True,
             "mask_prompt": True,
             "seed": HOLDOUT_SEED,

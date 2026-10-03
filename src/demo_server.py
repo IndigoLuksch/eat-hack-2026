@@ -21,11 +21,12 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from src.build_finetune_data import prompt_messages
-from src.config import INTENTS, RANK_MODEL, ROOT
+from src.config import BASELINE_MODEL, INTENTS, RANK_MODEL, ROOT
 from src.demo_catalog import Catalog, load_catalog
-from src.demo_model import ResidentModel
+from src.demo_model import ResidentModel, _OpenRouterGenerator
 from src.demo_rank import (
     N_REPS,
+    SOURCES,
     build_cards,
     place,
     shared_orders,
@@ -45,12 +46,16 @@ _PADDING = ":" + (" " * 2048) + "\n\n"
 
 catalog: Catalog
 model: ResidentModel
+baseline: _OpenRouterGenerator
 
 
 def _start_model() -> None:
-    global catalog, model
+    global catalog, model, baseline
     catalog = load_catalog()
     model = ResidentModel()
+    # Same OpenRouter key the ranker needs; construct here so a missing key
+    # fails before the first visitor submits.
+    baseline = _OpenRouterGenerator(BASELINE_MODEL)
     threading.Thread(target=model.load, name="demo-model", daemon=True).start()
 
 
@@ -139,7 +144,7 @@ async def rank(body: RankBody) -> StreamingResponse:
     async def events() -> AsyncIterator[str]:
         yield _PADDING
         yield _sse({"phase": "writing"})
-        gen: Optional[asyncio.Task] = None
+        writers: list[asyncio.Task] = []
         tasks: list[asyncio.Task] = []
         try:
             while not model.wait_ready(2):
@@ -150,13 +155,22 @@ async def rank(body: RankBody) -> StreamingResponse:
                 return
 
             messages = prompt_messages(catalog.products[body.parent_asin], body.intent)
-            gen = asyncio.create_task(asyncio.to_thread(model.generate, messages))
-            while not gen.done():
-                await asyncio.sleep(2)
-                if not gen.done():
+            writers = [
+                asyncio.create_task(asyncio.to_thread(model.generate, messages)),
+                asyncio.create_task(asyncio.to_thread(baseline.generate, messages)),
+            ]
+            pending_writers = set(writers)
+            while pending_writers:
+                finished, pending_writers = await asyncio.wait(
+                    pending_writers,
+                    timeout=2,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if not finished:
                     yield _sse({"phase": "writing"})
             try:
-                model_text = gen.result()
+                model_text = writers[0].result()
+                opus_text = writers[1].result()
             except Exception:
                 log.exception("description failed")
                 yield _sse({"phase": "error", "message": "Could not write a description."})
@@ -166,34 +180,36 @@ async def rank(body: RankBody) -> StreamingResponse:
             orders = shared_orders(asins, N_REPS, random.Random())
             caller = Caller(
                 model=RANK_MODEL,
-                concurrency=N_REPS * 2,
+                concurrency=N_REPS * len(SOURCES),
                 temperature=0.0,
                 max_tokens=300,
             )
             yield _sse({"phase": "ranking", "done": 0, "total": N_REPS})
 
-            user_places: list[Optional[int]] = [None] * N_REPS
-            model_places: list[Optional[int]] = [None] * N_REPS
+            places: dict[str, list[Optional[int]]] = {
+                source: [None] * N_REPS for source in SOURCES
+            }
+            texts = {"user": text, "model": model_text, "opus": opus_text}
 
             def runs_done() -> int:
                 return sum(
                     1
                     for index in range(N_REPS)
-                    if user_places[index] is not None and model_places[index] is not None
+                    if all(places[source][index] is not None for source in SOURCES)
                 )
 
             async def one(rep: int, source: str, description: str, order: list[str]) -> None:
                 cards = build_cards(order, catalog.products, body.parent_asin, description)
                 ranking = await rank_cards(caller, body.intent, cards)
-                slot = place(ranking, target_option_id(cards, body.parent_asin))
-                if source == "user":
-                    user_places[rep] = slot
-                else:
-                    model_places[rep] = slot
+                places[source][rep] = place(
+                    ranking, target_option_id(cards, body.parent_asin)
+                )
 
             for rep, order in enumerate(orders):
-                tasks.append(asyncio.create_task(one(rep, "user", text, order)))
-                tasks.append(asyncio.create_task(one(rep, "model", model_text, order)))
+                for source in SOURCES:
+                    tasks.append(
+                        asyncio.create_task(one(rep, source, texts[source], order))
+                    )
 
             pending = set(tasks)
             while pending:
@@ -210,18 +226,20 @@ async def rank(body: RankBody) -> StreamingResponse:
                 yield _sse({"phase": "ranking", "done": runs_done(), "total": N_REPS})
 
             summary = summarise_places(
-                [int(slot) for slot in user_places],
-                [int(slot) for slot in model_places],
+                [int(slot) for slot in places["user"]],
+                [int(slot) for slot in places["model"]],
+                [int(slot) for slot in places["opus"]],
             )
-            summary["user"]["text"] = text
-            summary["model"]["text"] = model_text
+            for source in SOURCES:
+                summary[source]["text"] = texts[source]
             yield _sse({"phase": "done", "result": summary})
         except Exception:
             log.exception("rank failed")
             yield _sse({"phase": "error", "message": "Ranking failed."})
         finally:
-            if gen is not None and not gen.done():
-                gen.cancel()
+            for task in writers:
+                if not task.done():
+                    task.cancel()
             for task in tasks:
                 if not task.done():
                     task.cancel()

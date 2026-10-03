@@ -30,7 +30,7 @@
         <textarea id="draft" rows="6"></textarea>
         <div class="bar">
           <p id="count" class="count"><span id="words">0</span> / 70</p>
-          <button type="button" id="rank" disabled>Compare with our model <span aria-hidden="true">→</span></button>
+          <button type="button" id="rank" disabled>Compare descriptions <span aria-hidden="true">→</span></button>
         </div>
       </div>
     </section>
@@ -70,17 +70,24 @@
       <div class="board">
         <div class="panel graph-span">
           <p class="label">The test</p>
-          <p class="brief">AI shopping agents were asked to rank products from a list of eight. Your description and the model's were each ranked five times against the same seven others. 1st is best.</p>
+          <p class="brief">AI shopping agents ranked products from a list of eight. Your description, our model, and Claude Opus were each ranked five times against the same seven others. 1st is best.</p>
         </div>
-        <article id="you" class="panel col">
+        <article id="you" class="panel col" data-source="user">
           <p class="who">You</p>
           <h1 class="outcome"></h1>
           <p class="mean"></p>
           <p class="mean-label">average rank</p>
           <p class="record"></p>
         </article>
-        <article id="model" class="panel col">
-          <p class="who">Model</p>
+        <article id="model" class="panel col" data-source="model">
+          <p class="who">Our model</p>
+          <h1 class="outcome"></h1>
+          <p class="mean"></p>
+          <p class="mean-label">average rank</p>
+          <p class="record"></p>
+        </article>
+        <article id="opus" class="panel col" data-source="opus">
+          <p class="who">Claude Opus</p>
           <h1 class="outcome"></h1>
           <p class="mean"></p>
           <p class="mean-label">average rank</p>
@@ -95,23 +102,29 @@
                 <div class="lanes">
                   <div class="lane series-you"></div>
                   <div class="lane series-model"></div>
+                  <div class="lane series-opus"></div>
                 </div>
               </div>
               <div class="x-labels">
                 <span class="series-you">you</span>
-                <span class="series-model">model</span>
+                <span class="series-model">our model</span>
+                <span class="series-opus">claude opus</span>
               </div>
             </div>
           </div>
           <p class="graph-note">1st is best · ± 1 standard deviation</p>
         </div>
-        <article class="panel">
+        <article class="panel copy-col">
           <p class="label">Your description</p>
           <p id="you-copy" class="copy"></p>
         </article>
-        <article class="panel">
-          <p class="label">Model's description</p>
+        <article class="panel copy-col">
+          <p class="label">Our model's description</p>
           <p id="model-copy" class="copy"></p>
+        </article>
+        <article class="panel copy-col">
+          <p class="label">Claude Opus's description</p>
+          <p id="opus-copy" class="copy"></p>
         </article>
       </div>
       <button type="button" id="again">Again</button>
@@ -215,7 +228,13 @@
       lane.append(dot)
     }
 
-    function comparisonGraph(you, model) {
+    const sides = [
+      { id: "you", key: "user", series: ".series-you", copy: "you-copy", win: "You did better." },
+      { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "Our model did better." },
+      { id: "opus", key: "opus", series: ".series-opus", copy: "opus-copy", win: "Claude Opus did better." },
+    ]
+
+    function comparisonGraph(payload) {
       const graph = document.querySelector("#result .graph")
       const scale = graph.querySelector(".scale")
       scale.replaceChildren()
@@ -230,21 +249,30 @@
         label.textContent = String(rank)
         scale.append(line, label)
       }
-      paintLane(graph.querySelector(".series-you"), you)
-      paintLane(graph.querySelector(".series-model"), model)
-      graph.setAttribute(
-        "aria-label",
-        "You averaged rank " + formatMean(you.mean) + ". The model averaged rank " + formatMean(model.mean) + ". 1 is best."
-      )
+      const parts = []
+      for (const side of sides) {
+        paintLane(graph.querySelector(side.series), payload[side.key])
+        parts.push(side.id === "you" ? "You" : side.id === "model" ? "Our model" : "Claude Opus")
+        parts[parts.length - 1] += " averaged rank " + formatMean(payload[side.key].mean)
+      }
+      graph.setAttribute("aria-label", parts.join(". ") + ". 1 is best.")
     }
 
-    function tally(userPlaces, modelPlaces) {
-      const score = { user: 0, model: 0 }
-      for (let i = 0; i < userPlaces.length; i++) {
-        if (userPlaces[i] < modelPlaces[i]) score.user += 1
-        else if (modelPlaces[i] < userPlaces[i]) score.model += 1
+    function bestCounts(payload) {
+      const total = payload.user.places.length
+      const wins = { user: 0, model: 0, opus: 0 }
+      for (let i = 0; i < total; i++) {
+        const ranks = {
+          user: payload.user.places[i],
+          model: payload.model.places[i],
+          opus: payload.opus.places[i],
+        }
+        const best = Math.min(ranks.user, ranks.model, ranks.opus)
+        for (const key of Object.keys(wins)) {
+          if (ranks[key] === best) wins[key] += 1
+        }
       }
-      return score
+      return wins
     }
 
     function paintScore(id, side, mark, wins, total) {
@@ -252,23 +280,26 @@
       column.classList.remove("better", "worse")
       if (mark) column.classList.add(mark)
       column.querySelector(".mean").textContent = formatMean(side.mean)
-      column.querySelector(".record").textContent = "Performed better in " + wins + " of " + total
+      column.querySelector(".record").textContent = "Best in " + wins + " of " + total
     }
 
     function showResult(payload) {
-      const you = payload.user
-      const model = payload.model
-      const total = you.places.length
-      const score = tally(you.places, model.places)
-      const youOutcome = document.querySelector("#you .outcome")
-      const modelOutcome = document.querySelector("#model .outcome")
-      youOutcome.textContent = payload.winner === "user" ? "You did better." : payload.winner === "tie" ? "It's a tie." : ""
-      modelOutcome.textContent = payload.winner === "model" ? "The model did better." : payload.winner === "tie" ? "It's a tie." : ""
-      paintScore("you", you, payload.winner === "user" ? "better" : payload.winner === "model" ? "worse" : "", score.user, total)
-      paintScore("model", model, payload.winner === "model" ? "better" : payload.winner === "user" ? "worse" : "", score.model, total)
-      comparisonGraph(you, model)
-      document.getElementById("you-copy").textContent = you.text
-      document.getElementById("model-copy").textContent = model.text
+      const total = payload.user.places.length
+      const wins = bestCounts(payload)
+      const soleWinner = payload.winner !== "tie"
+      for (const side of sides) {
+        const data = payload[side.key]
+        const outcome = document.querySelector("#" + side.id + " .outcome")
+        if (payload.winner === side.key) outcome.textContent = side.win
+        else if (payload.winner === "tie") outcome.textContent = "It's a tie."
+        else outcome.textContent = ""
+        let mark = ""
+        if (soleWinner && payload.winner === side.key) mark = "better"
+        else if (soleWinner) mark = "worse"
+        paintScore(side.id, data, mark, wins[side.key], total)
+        document.getElementById(side.copy).textContent = data.text
+      }
+      comparisonGraph(payload)
       show("result")
       window.scrollTo(0, 0)
     }
@@ -313,7 +344,7 @@
           ? "Agents finished ranking the list of eight"
           : "Agent " + Math.min(done + 1, total) + " is ranking the list of eight"
       } else if (phase === "writing") {
-        agentCaption.textContent = "Model is writing a competing description"
+        agentCaption.textContent = "Our model and Claude Opus are writing competing descriptions"
       } else {
         agentCaption.textContent = ""
       }

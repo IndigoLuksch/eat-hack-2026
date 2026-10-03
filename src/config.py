@@ -22,6 +22,8 @@ VARIANT_MODEL = os.getenv("VARIANT_MODEL", "google/gemini-2.5-flash-lite")
 VARIANT_REASONING_EFFORT = os.getenv("VARIANT_REASONING_EFFORT", "")
 # A step up from gpt-4o-mini, still a fast mini model with no reasoning tax.
 RANK_MODEL = os.getenv("RANK_MODEL", "openai/gpt-4.1-mini")
+# Strong hosted baseline shown beside the fine-tune in the demo.
+BASELINE_MODEL = os.getenv("BASELINE_MODEL", "anthropic/claude-opus-4.6")
 CONCURRENCY = int(os.getenv("CONCURRENCY", "16"))
 # Verified on Hugging Face: https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507
 BASE_MODEL = "Qwen/Qwen3-4B-Instruct-2507"

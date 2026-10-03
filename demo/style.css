@@ -5,8 +5,10 @@
   --muted: #6f6f6c;
   --pink: #f6e4ea;
   --green: #e4f0e1;
+  --slate: #e7ebf2;
   --pink-ink: #8d4d62;
   --green-ink: #3d6b49;
+  --slate-ink: #3d4a6b;
   --board-gap: 0.7rem;
   --panel-x: 1.2rem;
 }
@@ -30,7 +32,7 @@ main {
   padding: 2.5rem 1.25rem 4rem;
 }
 
-main.wide { max-width: 68rem; }
+main.wide { max-width: 72rem; }
 
 #write, #wait, #result {
   display: grid;
@@ -390,7 +392,7 @@ button {
 
 .board {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--board-gap);
 }
 
@@ -400,6 +402,7 @@ button {
   margin: 0;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .col.better { background: var(--green); }
@@ -408,7 +411,7 @@ button {
 .outcome {
   margin: 0.4rem 0 0;
   min-height: 2.5em;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -478,7 +481,7 @@ button {
 
 .x-labels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: calc(var(--board-gap) + 2 * var(--plot-x));
   margin-top: 0.85rem;
   text-align: center;
@@ -490,13 +493,16 @@ button {
 
 .lanes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: calc(var(--board-gap) + 2 * var(--plot-x));
 }
 
 .lane { position: relative; }
 .series-you { color: var(--green-ink); }
-.series-model { color: var(--pink-ink); }
+.series-model { color: var(--slate-ink); }
+.series-opus { color: var(--pink-ink); }
+
+.copy-col { min-width: 0; }
 
 .gridline {
   position: absolute;
@@ -551,9 +557,28 @@ button {
   line-height: 1.5;
 }
 
+@media (max-width: 860px) {
+  main.wide { max-width: 42rem; }
+
+  .board {
+    grid-template-columns: 1fr;
+  }
+
+  .graph-span { grid-column: auto; }
+
+  .graph-panel {
+    --plot-x: 2.1rem;
+  }
+
+  .lanes,
+  .x-labels {
+    gap: 1.4rem;
+  }
+}
+
 @media (max-width: 640px) {
   main { padding-top: 1.25rem; }
   img { height: 14rem; }
-  .outcome { font-size: 1.05rem; }
+  .outcome { font-size: 1.05rem; min-height: 2.2em; }
   .mean { font-size: 2rem; }
 }
