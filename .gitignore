@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+.DS_Store
+outputs/
+wandb/
+.hf_cache/
+*.egg-info/
+dist/
+build/
+
+# Large or regenerable data stays local; the study artifacts are committed so
+# the API stages can run on another machine without the 1.38 GB download.
+data/*
+!data/.gitkeep
+!data/study_products.jsonl
+!data/panels.json
