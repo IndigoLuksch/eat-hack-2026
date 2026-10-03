@@ -5,7 +5,9 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEMO_BACKEND=modal
+    DEMO_BACKEND=openrouter \
+    DEMO_MODEL=stealth/space-bunny-alpha \
+    RANK_MODEL=stealth/space-bunny-alpha
 
 COPY requirements-demo.txt .
 RUN pip install --no-cache-dir -r requirements-demo.txt

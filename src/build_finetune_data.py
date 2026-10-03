@@ -18,6 +18,7 @@ import typer
 from rich.console import Console
 
 from src.config import (
+    ARMS,
     DATA_DIR,
     DPO_MIN_GAP,
     HOLDOUT_PRODUCTS,
@@ -85,6 +86,42 @@ def sft_messages(product: dict[str, Any], intent_key: str, description: str) -> 
 
 def prompt_messages(product: dict[str, Any], intent_key: str) -> list[dict[str, str]]:
     return sft_messages(product, intent_key, "")[:-1]
+
+
+# Arms the shopping agent ranked first, by intent.
+BOTBAIT_ARM = {"general": "sensory", "flavour": "sensory", "health": "direct"}
+
+
+def botbait_messages(product: dict[str, Any], intent_key: str) -> list[dict[str, str]]:
+    """Style prompt for the BotBait writer. The other demo writers stay on the plain prompt."""
+    arm = BOTBAIT_ARM[intent_key]
+    if arm == "sensory":
+        shape = (
+            "Sentence one opens on taste, aroma, or texture. "
+            "The next three sentences stay in that sensory register and use more listed facts."
+        )
+    else:
+        shape = (
+            "Sentence one states the single strongest fact for this shopper, in plain words. "
+            "The next three sentences add more listed facts in that same plain voice. "
+            "Do not stop after the opening sentence."
+        )
+    user = (
+        f"{sft_user(product, intent_key)}\n\n"
+        f"Style: {ARMS[arm]}\n"
+        f"{shape}\n"
+        "Write exactly four sentences, as one paragraph, about 70 words. "
+        "Each sentence should be about 15 to 20 words. "
+        "Use only the facts above. Do not invent ingredients, certifications, "
+        "health claims, awards, or numbers. "
+        "Skip any fact that names a cocktail or a mixed drink. "
+        "Do not mention star ratings or review counts. "
+        "No title, no markdown, no bullet list. Output only the paragraph."
+    )
+    return [
+        {"role": "system", "content": SFT_SYSTEM},
+        {"role": "user", "content": user},
+    ]
 
 
 def ordered_arms(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

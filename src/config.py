@@ -20,8 +20,9 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 # Fast, cheap, and no reasoning step. About $0.40 for the 3,000 descriptions.
 VARIANT_MODEL = os.getenv("VARIANT_MODEL", "google/gemini-2.5-flash-lite")
 VARIANT_REASONING_EFFORT = os.getenv("VARIANT_REASONING_EFFORT", "")
-# A step up from gpt-4o-mini, still a fast mini model with no reasoning tax.
-RANK_MODEL = os.getenv("RANK_MODEL", "openai/gpt-4.1-mini")
+# Free OpenRouter model. Writes BotBait's descriptions and judges the demo.
+BOTBAIT_MODEL = os.getenv("BOTBAIT_MODEL", "stealth/space-bunny-alpha")
+RANK_MODEL = os.getenv("RANK_MODEL", BOTBAIT_MODEL)
 # Strong hosted baseline shown beside the fine-tune in the demo.
 BASELINE_MODEL = os.getenv("BASELINE_MODEL", "anthropic/claude-opus-4.6")
 # Untuned Qwen stand-in for the fine-tune base. Prefer Modal + Hugging Face

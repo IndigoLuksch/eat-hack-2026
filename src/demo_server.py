@@ -1,9 +1,7 @@
 """The demo page and the ranking API.
 
-The process binds its port before the writer is ready, so a health check
-succeeds while a local fine-tune is still loading. Ranking waits on that load.
-With DEMO_BACKEND=modal the BotBait writer is the fine-tune on Modal and is
-ready as soon as that endpoint answers. Ranking still waits if needed.
+The process binds its port before ranking starts. BotBait is an OpenRouter
+model with the style prompt, so it does not wait on a local weight load.
 """
 
 from __future__ import annotations
@@ -12,7 +10,6 @@ import asyncio
 import json
 import logging
 import random
-import threading
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Optional
 
@@ -20,10 +17,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from src.build_finetune_data import prompt_messages
-from src.config import BASELINE_MODEL, INTENTS, RANK_MODEL, ROOT
+from src.build_finetune_data import botbait_messages, prompt_messages
+from src.config import BASELINE_MODEL, BOTBAIT_MODEL, INTENTS, RANK_MODEL, ROOT
 from src.demo_catalog import Catalog, load_catalog
-from src.demo_model import ResidentModel, _ModalGenerator, _OpenRouterGenerator
+from src.demo_model import _ModalGenerator, _OpenRouterGenerator
 from src.demo_rank import (
     N_REPS,
     SOURCES,
@@ -45,7 +42,7 @@ RANK_ATTEMPTS = 3
 _PADDING = ":" + (" " * 2048) + "\n\n"
 
 catalog: Catalog
-model: ResidentModel
+model: Any
 qwen: Any
 baseline: _OpenRouterGenerator
 
@@ -65,15 +62,37 @@ def _qwen_writer() -> Any:
     )
 
 
+class _ReadyWriter:
+    """BotBait writer. Ready immediately; no local model load."""
+
+    def __init__(self, generator: _OpenRouterGenerator) -> None:
+        self._generator = generator
+        self.error: Optional[str] = None
+
+    def wait_ready(self, timeout: float) -> bool:
+        return True
+
+    def generate(
+        self,
+        messages: list[dict[str, str]],
+        max_new_tokens: int = 180,
+        temperature: float = 0.7,
+    ) -> str:
+        text = self._generator.generate(messages, max_new_tokens, temperature)
+        if not str(text).strip():
+            raise RuntimeError("model returned an empty description")
+        return str(text).strip()
+
+
 def _start_model() -> None:
     global catalog, model, qwen, baseline
     catalog = load_catalog()
-    model = ResidentModel()
+    # BotBait is the prompted OpenRouter model, not the Modal fine-tune.
+    model = _ReadyWriter(_OpenRouterGenerator(BOTBAIT_MODEL))
     # Same OpenRouter key the ranker needs; construct here so a missing key
     # fails before the first visitor submits.
     qwen = _qwen_writer()
     baseline = _OpenRouterGenerator(BASELINE_MODEL)
-    threading.Thread(target=model.load, name="demo-model", daemon=True).start()
 
 
 @asynccontextmanager
@@ -171,11 +190,12 @@ async def rank(body: RankBody) -> StreamingResponse:
                 yield _sse({"phase": "error", "message": "Model is not available."})
                 return
 
-            messages = prompt_messages(catalog.products[body.parent_asin], body.intent)
+            product = catalog.products[body.parent_asin]
+            plain = prompt_messages(product, body.intent)
             writers = [
-                asyncio.create_task(asyncio.to_thread(model.generate, messages)),
-                asyncio.create_task(asyncio.to_thread(qwen.generate, messages)),
-                asyncio.create_task(asyncio.to_thread(baseline.generate, messages)),
+                asyncio.create_task(asyncio.to_thread(model.generate, botbait_messages(product, body.intent))),
+                asyncio.create_task(asyncio.to_thread(qwen.generate, plain)),
+                asyncio.create_task(asyncio.to_thread(baseline.generate, plain)),
             ]
             pending_writers = set(writers)
             while pending_writers:

@@ -18,7 +18,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Optional
 
-from src.config import BASE_MODEL, OPENROUTER_BASE_URL, VARIANT_MODEL
+from src.config import BASE_MODEL, BOTBAIT_MODEL, OPENROUTER_BASE_URL
 from src.llm import _HEADERS
 
 _REPO_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -243,7 +243,7 @@ class ResidentModel:
 
     def load(self) -> None:
         try:
-            backend = os.getenv("DEMO_BACKEND", "modal").strip() or "modal"
+            backend = os.getenv("DEMO_BACKEND", "openrouter").strip() or "openrouter"
             if backend == "modal":
                 self._generator = _ModalGenerator(
                     os.getenv("DEMO_MODAL_URL", ""),
@@ -251,7 +251,7 @@ class ResidentModel:
                 )
                 return
             if backend == "openrouter":
-                model_name = os.getenv("DEMO_MODEL", "").strip() or VARIANT_MODEL
+                model_name = os.getenv("DEMO_MODEL", "").strip() or BOTBAIT_MODEL
                 self._generator = _OpenRouterGenerator(model_name)
                 return
             spec = os.getenv("DEMO_ADAPTER", "").strip()

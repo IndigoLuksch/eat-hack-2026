@@ -6,7 +6,11 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DEMO_BACKEND
-        value: modal
+        value: openrouter
+      - key: DEMO_MODEL
+        value: stealth/space-bunny-alpha
+      - key: RANK_MODEL
+        value: stealth/space-bunny-alpha
       - key: DEMO_MODAL_URL
         sync: false
       - key: DEMO_MODAL_QWEN_URL

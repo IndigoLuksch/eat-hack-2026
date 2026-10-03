@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BotBait (Qwen3-4B finetuned)</title>
+  <title>BotBait</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main>
-    <p class="brand">BotBait <span class="brand-sub">(Qwen3-4B finetuned)</span></p>
+    <p class="brand">BotBait</p>
     <section id="write">
       <div class="panel">
         <p class="label">Your task</p>
@@ -20,7 +20,7 @@
         <p id="shopper"></p>
       </div>
       <div class="panel product">
-        <img id="photo" alt="">
+        <img id="photo" alt="" hidden>
         <div class="product-body">
           <h2 id="title"></h2>
           <ul id="features"></ul>
@@ -71,7 +71,7 @@
       <div class="board">
         <div class="panel graph-span">
           <p class="label">The test</p>
-          <p class="brief">AI shopping agents ranked products from a list of eight. Your description, our fine-tuned model, base Qwen 4B, and Claude Opus were each ranked ten times against the same seven others. 1st is best.</p>
+          <p class="brief">AI shopping agents ranked products from a list of eight. Your description, BotBait, base Qwen 4B, and Claude Opus were each ranked ten times against the same seven others. 1st is best.</p>
         </div>
         <article id="you" class="panel col" data-source="user">
           <p class="who">You</p>
@@ -81,7 +81,7 @@
           <p class="record"></p>
         </article>
         <article id="model" class="panel col" data-source="model">
-          <p class="who">BotBait (Qwen3-4B finetuned)</p>
+          <p class="who">BotBait</p>
           <h1 class="outcome"></h1>
           <p class="mean"></p>
           <p class="mean-label">average rank</p>
@@ -116,7 +116,7 @@
               </div>
               <div class="x-labels">
                 <span class="series-you">you</span>
-                <span class="series-model">botbait (qwen3-4b)</span>
+                <span class="series-model">botbait</span>
                 <span class="series-qwen">qwen 4b</span>
                 <span class="series-opus">claude opus</span>
               </div>
@@ -129,7 +129,7 @@
           <p id="you-copy" class="copy"></p>
         </article>
         <article class="panel copy-col">
-          <p class="label">BotBait (Qwen3-4B finetuned) description</p>
+          <p class="label">BotBait description</p>
           <p id="model-copy" class="copy"></p>
         </article>
         <article class="panel copy-col">
@@ -182,8 +182,10 @@
     function renderCase(data) {
       current = data
       intent = data.intent
-      document.getElementById("photo").src = data.image
-      document.getElementById("photo").alt = data.title
+      const photo = document.getElementById("photo")
+      photo.hidden = !data.image
+      if (data.image) photo.src = data.image
+      photo.alt = data.title || ""
       document.getElementById("title").textContent = data.title
       const list = document.getElementById("features")
       list.replaceChildren()
@@ -244,7 +246,7 @@
 
     const sides = [
       { id: "you", key: "user", series: ".series-you", copy: "you-copy", win: "You did better.", label: "You" },
-      { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "BotBait (Qwen3-4B finetuned) did better.", label: "BotBait (Qwen3-4B finetuned)" },
+      { id: "model", key: "model", series: ".series-model", copy: "model-copy", win: "BotBait did better.", label: "BotBait" },
       { id: "qwen", key: "qwen", series: ".series-qwen", copy: "qwen-copy", win: "Qwen 4B did better.", label: "Qwen 4B" },
       { id: "opus", key: "opus", series: ".series-opus", copy: "opus-copy", win: "Claude Opus did better.", label: "Claude Opus" },
     ]
@@ -359,7 +361,7 @@
           ? "Agents finished ranking the list of eight"
           : "Agent " + Math.min(done + 1, total) + " is ranking the list of eight"
       } else if (phase === "writing") {
-        agentCaption.textContent = "BotBait (Qwen3-4B finetuned), Qwen 4B, and Claude Opus are writing competing descriptions"
+        agentCaption.textContent = "BotBait, Qwen 4B, and Claude Opus are writing competing descriptions"
       } else {
         agentCaption.textContent = ""
       }
