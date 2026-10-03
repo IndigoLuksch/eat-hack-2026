@@ -36,10 +36,31 @@
     </section>
 
     <section id="wait" hidden>
-      <div id="wait-panel" class="panel busy">
+      <div id="wait-panel" class="panel busy" data-phase="writing" data-done="0" data-total="5">
         <div class="wait-row">
           <span class="spinner" aria-hidden="true"></span>
           <p id="status"><span id="status-text">Writing</span><span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></p>
+        </div>
+        <div class="agents-scene" aria-hidden="true">
+          <p class="label">Shopping agents</p>
+          <div class="agent-row">
+            <div class="agent" data-n="1"><span class="agent-face"></span><span class="agent-tag">A1</span></div>
+            <div class="agent" data-n="2"><span class="agent-face"></span><span class="agent-tag">A2</span></div>
+            <div class="agent" data-n="3"><span class="agent-face"></span><span class="agent-tag">A3</span></div>
+            <div class="agent" data-n="4"><span class="agent-face"></span><span class="agent-tag">A4</span></div>
+            <div class="agent" data-n="5"><span class="agent-face"></span><span class="agent-tag">A5</span></div>
+          </div>
+          <div class="rank-list">
+            <div class="rank-item" style="--i:0"><span class="rank-num">1</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--i:1"><span class="rank-num">2</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--i:2"><span class="rank-num">3</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--i:3"><span class="rank-num">4</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--i:4"><span class="rank-num">5</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--i:5"><span class="rank-num">6</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--i:6"><span class="rank-num">7</span><span class="rank-bar"></span></div>
+            <div class="rank-item" style="--i:7"><span class="rank-num">8</span><span class="rank-bar"></span></div>
+          </div>
+          <p class="agent-caption"><span id="agent-caption">Model is writing a competing description</span></p>
         </div>
         <button type="button" id="back" hidden>Again</button>
       </div>
@@ -65,7 +86,7 @@
           <p class="mean-label">average rank</p>
           <p class="record"></p>
         </article>
-        <div class="panel graph-span">
+        <div class="panel graph-span graph-panel">
           <div class="graph">
             <div class="y-label">rank</div>
             <div class="plot-col">
@@ -105,9 +126,19 @@
     const words = document.getElementById("words")
     const statusText = document.getElementById("status-text")
     const waitPanel = document.getElementById("wait-panel")
+    const agentCaption = document.getElementById("agent-caption")
     const back = document.getElementById("back")
     let current = null
     let intent = ""
+    let rankTimer = null
+    const rankOrders = [
+      [0, 1, 2, 3, 4, 5, 6, 7],
+      [2, 0, 4, 1, 3, 6, 5, 7],
+      [1, 3, 0, 5, 2, 4, 7, 6],
+      [4, 1, 0, 2, 6, 3, 5, 7],
+      [0, 2, 5, 1, 3, 7, 4, 6],
+      [3, 0, 1, 4, 2, 5, 6, 7],
+    ]
 
     function show(which) {
       write.hidden = which !== "write"
@@ -242,9 +273,56 @@
       window.scrollTo(0, 0)
     }
 
-    function setWait(text, loading) {
+    function shuffleRanks(seed) {
+      const items = [...waitPanel.querySelectorAll(".rank-item")]
+      const order = rankOrders[seed % rankOrders.length]
+      items.forEach((item, index) => {
+        item.style.order = String(order[index])
+        item.querySelector(".rank-num").textContent = String(order[index] + 1)
+      })
+    }
+
+    function stopRankMotion() {
+      if (rankTimer) {
+        clearInterval(rankTimer)
+        rankTimer = null
+      }
+    }
+
+    function startRankMotion() {
+      if (rankTimer) return
+      let tick = 0
+      shuffleRanks(tick)
+      rankTimer = setInterval(() => {
+        tick += 1
+        shuffleRanks(tick)
+      }, 900)
+    }
+
+    function setWait(text, loading, meta) {
       statusText.textContent = text
       waitPanel.classList.toggle("busy", loading)
+      const phase = meta && meta.phase ? meta.phase : "writing"
+      const done = meta && typeof meta.done === "number" ? meta.done : 0
+      const total = meta && typeof meta.total === "number" ? meta.total : 5
+      waitPanel.dataset.phase = loading ? phase : "idle"
+      waitPanel.dataset.done = String(done)
+      waitPanel.dataset.total = String(total)
+      if (phase === "ranking") {
+        agentCaption.textContent = done >= total
+          ? "Agents finished ranking the list of eight"
+          : "Agent " + Math.min(done + 1, total) + " is ranking the list of eight"
+      } else if (phase === "writing") {
+        agentCaption.textContent = "Model is writing a competing description"
+      } else {
+        agentCaption.textContent = ""
+      }
+      if (loading && phase === "ranking") startRankMotion()
+      else if (!loading) stopRankMotion()
+      else if (loading && phase === "writing") {
+        stopRankMotion()
+        shuffleRanks(0)
+      }
     }
 
     function fail(message) {
@@ -263,7 +341,7 @@
     async function submit() {
       const text = draft.value.trim()
       if (!text || !current) return
-      setWait("Writing", true)
+      setWait("Writing", true, { phase: "writing" })
       back.hidden = true
       show("wait")
       let response
@@ -304,9 +382,13 @@
           } catch (error) {
             continue
           }
-          if (event.phase === "writing") setWait("Writing", true)
+          if (event.phase === "writing") setWait("Writing", true, { phase: "writing" })
           if (event.phase === "ranking") {
-            setWait("Ranking " + event.done + " of " + event.total, true)
+            setWait("Ranking " + event.done + " of " + event.total, true, {
+              phase: "ranking",
+              done: event.done,
+              total: event.total,
+            })
           }
           if (event.phase === "error") {
             settled = true
@@ -314,6 +396,7 @@
           }
           if (event.phase === "done") {
             settled = true
+            stopRankMotion()
             showResult(event.result)
           }
         }
