@@ -22,5 +22,7 @@ data/*
 !data/product_images.json
 !data/variants.jsonl
 !data/rankings.jsonl
+!data/rankings_a.jsonl
+!data/rankings_b.jsonl
 !data/half_a/
 !data/half_b/
