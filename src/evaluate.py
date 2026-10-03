@@ -40,6 +40,7 @@ from src.config import (
     ROOT,
     SFT_SYSTEM,
     VARIANT_MODEL,
+    VARIANT_REASONING_EFFORT,
 )
 from src.jsonl import read_jsonl
 from src.llm import Caller, run_bounded
@@ -504,6 +505,7 @@ def main(
             temperature=temperature,
             max_tokens=400,
             api_key=api_key,
+            reasoning_effort=VARIANT_REASONING_EFFORT,
         )
 
         async def write_prompt(job: tuple[str, str, str]) -> Optional[dict[str, Any]]:

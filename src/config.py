@@ -17,8 +17,12 @@ REVIEWS_JSONL = "raw/review_categories/Grocery_and_Gourmet_Food.jsonl"
 # --- OpenRouter -------------------------------------------------------------
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-VARIANT_MODEL = os.getenv("VARIANT_MODEL", "anthropic/claude-3.5-sonnet")
-RANK_MODEL = os.getenv("RANK_MODEL", "openai/gpt-4o-mini")
+# Free on OpenRouter. It reasons by default at max effort, which spends the
+# completion budget before the description, so generation requests low effort.
+VARIANT_MODEL = os.getenv("VARIANT_MODEL", "stealth/space-bunny-alpha")
+VARIANT_REASONING_EFFORT = os.getenv("VARIANT_REASONING_EFFORT", "low")
+# A step up from gpt-4o-mini, still a fast mini model with no reasoning tax.
+RANK_MODEL = os.getenv("RANK_MODEL", "openai/gpt-4.1-mini")
 CONCURRENCY = int(os.getenv("CONCURRENCY", "16"))
 # Verified on Hugging Face: https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507
 BASE_MODEL = "Qwen/Qwen3-4B-Instruct-2507"

@@ -66,16 +66,39 @@ class Caller:
         max_tokens: int = 700,
         max_attempts: int = 5,
         api_key: Optional[str] = None,
+        reasoning_effort: Optional[str] = None,
     ) -> None:
-        self.client = make_client(api_key)
+        # Built on first use, inside the running loop. Creating the HTTP client
+        # or the semaphore beforehand binds them to a different loop on Python 3.9.
+        self._api_key = api_key
+        self._concurrency = concurrency
+        self.client: Optional[AsyncOpenAI] = None
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.max_attempts = max_attempts
-        self._sem = asyncio.Semaphore(concurrency)
+        self.reasoning_effort = reasoning_effort
+        self._sem: Optional[asyncio.Semaphore] = None
+
+    def _bind(self) -> asyncio.Semaphore:
+        if self.client is None:
+            self.client = make_client(self._api_key)
+        if self._sem is None:
+            self._sem = asyncio.Semaphore(self._concurrency)
+        return self._sem
+
+    def _request_kwargs(self) -> dict[str, Any]:
+        if not self.reasoning_effort:
+            return {}
+        # Exclude the trace so the completion is the JSON we asked for.
+        return {
+            "extra_body": {
+                "reasoning": {"effort": self.reasoning_effort, "exclude": True},
+            }
+        }
 
     async def text(self, system: str, user: str) -> str:
-        async with self._sem:
+        async with self._bind():
             last: Exception | None = None
             for attempt in range(self.max_attempts):
                 try:
@@ -87,6 +110,7 @@ class Caller:
                             {"role": "system", "content": system},
                             {"role": "user", "content": user},
                         ],
+                        **self._request_kwargs(),
                     )
                     content = resp.choices[0].message.content
                     if not content:
@@ -98,7 +122,7 @@ class Caller:
             raise RuntimeError(f"all {self.max_attempts} attempts failed: {last}")
 
     async def json(self, system: str, user: str) -> dict[str, Any]:
-        async with self._sem:
+        async with self._bind():
             last: Exception | None = None
             for attempt in range(self.max_attempts):
                 try:
@@ -111,6 +135,7 @@ class Caller:
                             {"role": "system", "content": system},
                             {"role": "user", "content": user},
                         ],
+                        **self._request_kwargs(),
                     )
                     content = resp.choices[0].message.content
                     if not content:

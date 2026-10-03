@@ -27,6 +27,7 @@ from src.config import (
     MAIN_RUN_ARMS,
     TARGET_WORDS,
     VARIANT_MODEL,
+    VARIANT_REASONING_EFFORT,
     WORD_TOLERANCE,
 )
 from src.jsonl import read_jsonl
@@ -225,6 +226,7 @@ def main(
         temperature=temperature,
         max_tokens=500,
         api_key=api_key,
+        reasoning_effort=VARIANT_REASONING_EFFORT,
     )
 
     async def work(job: tuple[str, str, str]) -> Optional[dict[str, Any]]:
