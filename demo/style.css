@@ -41,7 +41,14 @@ main.wide { max-width: 88rem; }
   font-size: 1.65rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.15;
+}
+
+.brand-sub {
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
 }
 
 #write, #wait, #result {
@@ -438,10 +445,11 @@ button {
 
 .who {
   margin: 0;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  line-height: 1.25;
 }
 
 .mean {
@@ -501,8 +509,8 @@ button {
   gap: calc(var(--board-gap) + 2 * var(--plot-x));
   margin-top: 0.85rem;
   text-align: center;
-  font-size: 0.72rem;
-  line-height: 1;
+  font-size: 0.68rem;
+  line-height: 1.2;
 }
 
 .scale, .lanes { position: absolute; inset: 0; }
