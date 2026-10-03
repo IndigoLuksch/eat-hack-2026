@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+import time
 from typing import Any, Awaitable, Callable, Iterable, Optional, TypeVar
 
 from openai import AsyncOpenAI
@@ -151,3 +152,50 @@ async def gather_with_progress(
     await asyncio.gather(*(wrapped(i) for i in items))
     bar.close()
     return results
+
+
+async def run_bounded(
+    items: Iterable[T],
+    worker: Callable[[T], Awaitable[Any]],
+    *,
+    concurrency: int,
+    desc: str,
+    deadline: Optional[float] = None,
+    on_result: Optional[Callable[[Any], None]] = None,
+) -> tuple[list[Any], int]:
+    """Run `worker` with at most `concurrency` calls in flight.
+
+    `deadline` is a `time.monotonic()` timestamp. A call already in flight is
+    allowed to finish; nothing new starts after the deadline. Returns the
+    collected results and how many items never started.
+    """
+    queue: asyncio.Queue[T] = asyncio.Queue()
+    pending = list(items)
+    for item in pending:
+        queue.put_nowait(item)
+    results: list[Any] = []
+    bar = tqdm(total=len(pending), desc=desc)
+
+    async def consume() -> None:
+        while True:
+            if deadline is not None and time.monotonic() >= deadline:
+                return
+            try:
+                item = queue.get_nowait()
+            except asyncio.QueueEmpty:
+                return
+            try:
+                out = await worker(item)
+            except Exception as exc:  # noqa: BLE001 - one bad call must not kill the run
+                bar.write(f"  skipped: {exc}")
+                out = None
+            if out is not None:
+                results.append(out)
+                if on_result is not None:
+                    on_result(out)
+            bar.update(1)
+
+    await asyncio.gather(*(consume() for _ in range(max(1, concurrency))))
+    left = queue.qsize()
+    bar.close()
+    return results, left

@@ -53,19 +53,24 @@ main run.
 
 ```
 src/
-  config.py             # study parameters, variant arms, intents
-  download_data.py      # Hugging Face → .hf_cache
-  extract_drinks.py     # Amazon grocery metadata → drink catalogue
-  build_panels.py       # catalogue → blocked shortlist panels
-  llm.py                # async OpenRouter caller: concurrency, retries, JSON repair
-  generate_variants.py  # product × intent × arm → description
+  config.py                # study parameters, rhetorical arms, three intents
+  download_data.py         # Hugging Face → .hf_cache
+  extract_drinks.py        # Amazon grocery metadata → drink catalogue
+  build_panels.py          # catalogue → blocked shortlist panels
+  llm.py                   # async OpenRouter caller: concurrency, retries, JSON repair
+  generate_variants.py     # product × intent × arm → description
+  run_ranking.py           # resumable shopping-agent ranking trials
+  score_variants.py        # mean normalised rank with shrinkage
+  build_finetune_data.py   # SFT + DPO sets, product-level holdout
+  finetune.py              # Qwen3-4B LoRA via unsloth, TRL, or mlx
+  evaluate.py              # fine-tune vs prompt-only baseline vs original
 data/
-  study_products.jsonl  # committed: the 200 study products
-  panels.json           # committed: the 25 shortlist panels
+  study_products.jsonl     # committed: the 200 study products
+  panels.json              # committed: the 25 shortlist panels
 ```
 
-Still to build: `run_ranking.py`, `score_variants.py`, `build_finetune_data.py`,
-`finetune.py`, `evaluate.py`. See [PLAN.md](PLAN.md) §5–8.
+Training dependencies live in `requirements-train.txt` and are imported only
+when a backend is selected. Unsloth is CUDA-only.
 
 ## Source data
 

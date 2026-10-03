@@ -20,6 +20,8 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 VARIANT_MODEL = os.getenv("VARIANT_MODEL", "anthropic/claude-3.5-sonnet")
 RANK_MODEL = os.getenv("RANK_MODEL", "openai/gpt-4o-mini")
 CONCURRENCY = int(os.getenv("CONCURRENCY", "16"))
+# Verified on Hugging Face: https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507
+BASE_MODEL = "Qwen/Qwen3-4B-Instruct-2507"
 
 # --- Study parameters -------------------------------------------------------
 # Deliberately narrow: one leaf category inside one price band. Narrowing does
@@ -34,6 +36,13 @@ MAX_PRICE_RATIO = 2.5  # cap on max/min price inside one panel
 MIN_RATINGS = 50
 MIN_DESC_CHARS = 120
 SHRINKAGE_PRIOR = 25  # pseudo-observations pulling a cell toward the pooled mean
+HOLDOUT_PRODUCTS = 20  # 10% of the 200 study products, split by parent_asin
+HOLDOUT_SEED = 11
+DPO_MIN_GAP = 0.05
+SFT_SYSTEM = (
+    "You write product descriptions for non-alcoholic drinks that rank highly "
+    "with AI shopping agents."
+)
 
 # Amazon's leaf categories leak adjacent products; these are not drinks you
 # would shortlist against a juice.
@@ -53,51 +62,50 @@ TITLE_EXCLUDE = (
     "supplement",
 )
 
-# Variant styles. "original" is the untouched control; "probe" is a deliberately
-# weak arm used as a manipulation check — if it does not rank last, the
-# experiment is not measuring copy at all.
-VARIANT_STYLES: dict[str, str] = {
+# Rhetorical arms. The intent topic is held fixed; only the form varies, so a
+# win is attributable to that form. "original" is the untouched control and is
+# not length-matched. "probe" is a deliberately weak arm used as a manipulation
+# check in the pilot — if it does not rank last, the experiment is not
+# measuring copy at all.
+ARMS: dict[str, str] = {
     "original": "",
-    "sensory": (
-        "Lead with honest sensory detail: flavour, aroma, carbonation, mouthfeel, "
-        "how it tastes chilled. Vivid but never invented."
-    ),
-    "spec_dense": (
-        "Lead with quantified, scannable specification: pack size, volume per unit, "
-        "calories, sugar, caffeine, servings. Facts over adjectives."
-    ),
-    "constraint_match": (
-        "Lead with explicit dietary and lifestyle flags a shopper might filter on: "
-        "sugar-free, vegan, gluten-free, organic, non-GMO, caffeine-free, kosher. "
-        "State only flags supported by the source text; say nothing about the rest."
-    ),
-    "occasion": (
-        "Lead with concrete use cases and moments: workouts, lunchboxes, desk work, "
-        "road trips, hosting. Make the fit to a situation obvious."
-    ),
-    "social_proof": (
-        "Lead with popularity and reviewer consensus, using only the rating and "
-        "review count supplied. No invented awards, rankings or endorsements."
+    "direct": "Lead with the single strongest intent-relevant fact, plainly stated.",
+    "sensory": "Concrete sensory language — taste, aroma, texture, temperature.",
+    "quantified": "Foreground numbers: volume, servings, percentages, counts.",
+    "use_case": "Concrete situations and moments where this drink fits.",
+    "assurance": (
+        "Trust signals present in the source: brand provenance, rating, certifications."
     ),
     "probe": (
         "Write a deliberately vague, low-information description. Generic praise "
-        "only, no concrete facts, no numbers, no dietary flags. This is a control "
-        "arm and is expected to perform badly."
+        "only, no concrete facts, no numbers. This is a control arm and is "
+        "expected to perform badly."
     ),
 }
 
-# Variants actually shown in the main run. The probe is pilot-only.
-MAIN_RUN_STYLES = ("original", "sensory", "spec_dense", "constraint_match", "occasion", "social_proof")
+# Arms shown in the main run. The probe is pilot-only.
+MAIN_RUN_ARMS = ("original", "direct", "sensory", "quantified", "use_case", "assurance")
 
-TARGET_WORDS = 70  # all variants pinned to this length so length is not a confound
+TARGET_WORDS = 70  # generated arms are pinned to this length so length is not a confound
+WORD_TOLERANCE = 0.10  # reject and regenerate anything outside ±10%
 
-CUSTOMER_INTENTS: dict[str, str] = {
-    "everyday_refresh": "I want a refreshing non-alcoholic drink for everyday use at home.",
-    "low_sugar": "I'm cutting down on sugar. Find me something with little or no sugar.",
-    "kids_family": "I need something my kids will actually drink, for school lunchboxes.",
-    "afternoon_lift": "I want a natural pick-me-up to get through the afternoon slump.",
-    "sports_hydration": "I want something to rehydrate with after a hard workout.",
-    "clean_label": "I prefer organic, natural, clean-label drinks without artificial additives.",
+# `shopper` is the ranking prompt. `brief` is the generation prompt.
+INTENTS: dict[str, dict[str, str]] = {
+    "general": {
+        "label": "General",
+        "shopper": "I'm browsing for a good fruit juice. Show me the best option.",
+        "brief": "Broad ecommerce audience. The strongest balanced canonical description.",
+    },
+    "health": {
+        "label": "Health",
+        "shopper": "I care about what's in my drinks — nutrition, ingredients, nothing artificial.",
+        "brief": "Shopper prioritises nutritional characteristics, ingredients and everyday refreshment.",
+    },
+    "flavour": {
+        "label": "Flavour",
+        "shopper": "I want something that genuinely tastes great.",
+        "brief": "Shopper primarily cares about taste, aroma, texture and sensory experience.",
+    },
 }
 
 # Amazon's grocery taxonomy is `Grocery & Gourmet Food > <level 2> > ...`.

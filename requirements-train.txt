@@ -1,0 +1,16 @@
+# Training extras. Variant generation, ranking and scoring do not need these.
+# Install the backend you pass to `python -m src.finetune --backend`.
+
+# --backend trl  (CUDA, or Apple MPS with bf16/fp16 disabled)
+torch
+transformers>=4.51.0
+peft>=0.15.0
+trl>=0.16.0
+accelerate
+
+# --backend unsloth is CUDA-only. It does not run on Apple Silicon.
+# pip install unsloth
+
+# --backend mlx is the Apple Silicon path. Its adapter is not a PEFT adapter;
+# evaluate.py loads it through mlx_lm.
+# pip install mlx mlx-lm
