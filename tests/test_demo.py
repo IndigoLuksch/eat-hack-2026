@@ -86,6 +86,14 @@ class OpenRouterWriter(unittest.TestCase):
         self.assertIn("Title: Apple juice", sent["messages"][1]["content"])
         self.assertIn("about 70 words", sent["messages"][1]["content"])
 
+    def test_generate_defaults_match_the_resident_model(self) -> None:
+        client = _FakeClient("A short description.")
+        writer = _OpenRouterGenerator("anthropic/claude-opus-4.6", client=client)
+        text = writer.generate([{"role": "user", "content": "Title: Juice"}])
+        self.assertEqual(text, "A short description.")
+        self.assertEqual(client.completions.kwargs["max_tokens"], 320)
+        self.assertEqual(client.completions.kwargs["temperature"], 0.7)
+
 
 class ImageAndFeatures(unittest.TestCase):
     def test_prefers_main_hi_res_then_large(self) -> None:

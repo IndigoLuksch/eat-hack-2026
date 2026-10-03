@@ -131,7 +131,12 @@ class _OpenRouterGenerator:
 
         self.client = OpenAI(base_url=OPENROUTER_BASE_URL, api_key=key, default_headers=_HEADERS)
 
-    def generate(self, messages: list[dict[str, str]], max_new_tokens: int, temperature: float) -> str:
+    def generate(
+        self,
+        messages: list[dict[str, str]],
+        max_new_tokens: int = 180,
+        temperature: float = 0.7,
+    ) -> str:
         prompt = [dict(message) for message in messages]
         if prompt and prompt[-1].get("role") == "user":
             prompt[-1]["content"] = (
